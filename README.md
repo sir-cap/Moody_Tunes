@@ -14,15 +14,15 @@
     - Facial Recognition: Our machine learning model recognizes and interprets your facial expressions, capturing your current mood.
     - Personalized Recommendations: Based on your detected mood, MoodyTunes generates customized song recommendations tailored specifically to you.
     
-    Note: The facial recognition technology used by MoodyTunes respects your privacy and does not store or share any personal data. Your facial expressions are solely used for the purpose of determining your mood and providing accurate song recommendations.
+    Note: The facial recognition technology used by MoodyTunes respects your privacy and does not share any personal data. Your facial expressions are solely used for the purpose of determining your mood and providing accurate song recommendations.
     
     Embrace the harmony between your mood and music with MoodyTunes today!
     
 ## Data
     
-    Songs:
+    Songs: https://www.kaggle.com/datasets/musicblogger/spotify-music-data-to-identify-the-moods
     
-    Facial recogniziton:
+    Facial recogniziton: https://www.kaggle.com/datasets/jonathanoheix/face-expression-recognition-dataset
     
 ## Results
     

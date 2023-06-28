@@ -1,3 +1,4 @@
+#importing libraries
 from tensorflow import keras
 from keras.models import load_model
 from time import sleep
@@ -8,17 +9,21 @@ import numpy as np
 import datetime 
 import time 
 
-countdown_time = 3  # Set the countdown time in seconds
-countdown_start = False  # Flag to indicate if countdown has started
-countdown_end_time = None  # Variable to store the countdown end time
-
+#path for the model
 face_classifier = cv2.CascadeClassifier(r'/Users/diogocapitao/Documents/DA_Bootcamp/Project/final_project/haarcascade_frontalface_default.xml')
-classifier =load_model(r'/Users/diogocapitao/Documents/DA_Bootcamp/Project/final_project/model.h5')
+classifier = load_model(r'/Users/diogocapitao/Documents/DA_Bootcamp/Project/final_project/model.h5')
 
-emotion_labels = ['Angry','Disgust','Fear','Happy','Neutral', 'Sad', 'Surprise']
+emotion_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Sad', 'Surprise']
 
 cap = cv2.VideoCapture(0)
 
+#adding a countdown
+countdown_time = 3  # Set the countdown time in seconds
+countdown_start = False  # Flag to indicate if countdown has started
+countdown_end_time = None  # Variable to store the countdown end time
+detected_emotion = None  # Variable to store the detected emotion
+
+#loop to make the camera works and add emotions - face recognition
 while True:
     _, frame = cap.read()
     if frame is None:
@@ -40,20 +45,45 @@ while True:
             prediction = classifier.predict(roi)[0]
             label = emotion_labels[prediction.argmax()]
             label_position = (x, y-11)
-            cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 2)
+
+            detected_emotion = label  # Store the detected emotion
         else:
-            cv2.putText(frame, 'No Faces', (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-    cv2.imshow('MOODY TUNES', frame)
+            cv2.putText(frame, 'No Faces', (30, 80), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 2)
+    
+    #adding countdown on screen
+    if countdown_start and time.time() < countdown_end_time:
+        countdown_remaining = int(countdown_end_time - time.time()) + 1
+        if countdown_remaining > 0:
+            countdown_text = str(countdown_remaining)
+        else:
+            countdown_text = 'Great job!'
+        countdown_text_size = cv2.getTextSize(countdown_text, cv2.FONT_HERSHEY_DUPLEX, 2, 2)[0]
+        text_x = int((frame.shape[1] - countdown_text_size[0]) / 2 - countdown_text_size[0] // 2)   # Calculate x coordinate for center alignment
+        cv2.putText(frame, countdown_text, (text_x, 75), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 255, 255), 2)
+
+    cv2.imshow('MoodyTunes', frame)
 
     key = cv2.waitKey(1)
     if key & 0xFF == ord('s'):
-        timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        file_name = f'picture_{timestamp}.jpg'
-        file_path = r'/Users/diogocapitao/Documents/DA_Bootcamp/Project/final_project/pictures' + file_name
-        cv2.imwrite(file_path, frame)
-        print(f'Picture saved as {file_name}')
+        if not countdown_start:
+            countdown_start = True
+            countdown_end_time = time.time() + countdown_time
+
     elif key & 0xFF == ord('q'):
         break
+
+    if countdown_start and time.time() >= countdown_end_time:
+        timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+        file_name = f'picture_{timestamp}_{detected_emotion}.jpg'  # Add detected emotion to the file name
+        file_path = r'/Users/diogocapitao/Documents/DA_Bootcamp/Project/final_project/pictures/' + file_name #picture saving
+        cv2.imwrite(file_path, frame)
+
+        countdown_start = False  # Reset the countdown
+        cv2.waitKey(500) # add a break between caputre and last message "Great job"
+        cv2.putText(frame, 'Great job!', (text_x, 50), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 255, 255), 2)
+        cv2.imshow('MoodyTunes', frame)
+        cv2.waitKey(1500)  # Display "Great job!" and the captured image for 1.5 seconds
 
 cap.release()
 cv2.destroyAllWindows()

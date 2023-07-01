@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import datetime 
 import time 
+import pandas as pd
 
 #path for the model
 face_classifier = cv2.CascadeClassifier(r'/Users/diogocapitao/Documents/DA_Bootcamp/Project/final_project/haarcascade_frontalface_default.xml')
@@ -62,7 +63,7 @@ while True:
         text_x = int((frame.shape[1] - countdown_text_size[0]) / 2 - countdown_text_size[0] // 2)   # Calculate x coordinate for center alignment
         cv2.putText(frame, countdown_text, (text_x, 75), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 255, 255), 2)
 
-    cv2.imshow('MoodyTunes', frame)
+    cv2.imshow('Moody Tunes', frame)
 
     key = cv2.waitKey(1)
     if key & 0xFF == ord('s'):
@@ -75,15 +76,16 @@ while True:
 
     if countdown_start and time.time() >= countdown_end_time:
         timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        file_name = f'picture_{timestamp}_{detected_emotion}.jpg'  # Add detected emotion to the file name
+        file_name = f'{detected_emotion}---{timestamp}.jpg'  # Add detected emotion to the file name
         file_path = r'/Users/diogocapitao/Documents/DA_Bootcamp/Project/final_project/pictures/' + file_name #picture saving
         cv2.imwrite(file_path, frame)
 
         countdown_start = False  # Reset the countdown
-        cv2.waitKey(500) # add a break between caputre and last message "Great job"
+        cv2.waitKey(600) # add a break between caputre and last message "Great job"
         cv2.putText(frame, 'Great job!', (text_x, 50), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 255, 255), 2)
-        cv2.imshow('MoodyTunes', frame)
-        cv2.waitKey(1500)  # Display "Great job!" and the captured image for 1.5 seconds
+        cv2.imshow('Moody Tunes', frame)
+        cv2.waitKey(1300)  # Display "Great job!" and the captured image for 1.3 seconds
 
 cap.release()
 cv2.destroyAllWindows()
+

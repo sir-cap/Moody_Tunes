@@ -9,6 +9,8 @@ import numpy as np
 import datetime 
 import time 
 import pandas as pd
+import os 
+import re
 
 #path for the model
 face_classifier = cv2.CascadeClassifier(r'/Users/diogocapitao/Documents/DA_Bootcamp/Project/final_project/haarcascade_frontalface_default.xml')
@@ -66,12 +68,12 @@ while True:
     cv2.imshow('Moody Tunes', frame)
 
     key = cv2.waitKey(1)
-    if key & 0xFF == ord('s'):
+    if key & 0xFF == ord('m'):
         if not countdown_start:
             countdown_start = True
             countdown_end_time = time.time() + countdown_time
 
-    elif key & 0xFF == ord('q'):
+    elif key & 0xFF == ord('t'):
         break
 
     if countdown_start and time.time() >= countdown_end_time:
@@ -89,3 +91,28 @@ while True:
 cap.release()
 cv2.destroyAllWindows()
 
+def moody_tunes(folder_path, emotion, songs):
+# path for the folder with the pictures
+    files = os.listdir(folder_path)
+
+# Sorting the files by their modified time in descending order
+    sorted_files = sorted(files, key=lambda x: os.path.getmtime(os.path.join(folder_path, x)), reverse=True)
+    
+    if sorted_files:
+        last_file = sorted_files[-1] #to have the last one for sure!
+
+    # Extract the emotion from the last added file name
+    match = re.search(r'^(.*?)---', sorted_files[0])
+    if match:
+        emotion = match.group(1).lower()
+        print(f"For your {emotion} mood, your tunes are:")
+        # Filter songs by mood
+        emotion_songs = songs[songs['Mood'].str.lower() == emotion]
+        # Randomly select 7 songs
+        random_songs = emotion_songs.sample(n=7)
+        # Print the songs
+        print(random_songs[['Track', 'Artist']].to_string(index=False))
+    else:
+        print("Try again folks.")
+
+        moody_tunes(folder_path, emotion, songs)

@@ -12,6 +12,8 @@ from keras.models import load_model
 from keras.preprocessing.image import img_to_array
 
 songs = pd.read_csv('cleaned_songs.csv')
+os.environ["http://localhost:8502/callback"] = "http://localhost:8502/callback"
+
 
 # Path for the model
 face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -24,6 +26,34 @@ countdown_time = 3  # Set the countdown time in seconds
 countdown_start = False  # Flag to indicate if countdown has started
 countdown_end_time = None  # Variable to store the countdown end time
 detected_emotion = None  # Variable to store the detected emotion
+
+
+def create_spotify_playlist(recommended_songs, username, emotion):
+    # Create a new playlist
+    playlist_name = f"Moody Tunes for the {emotion} day - {time.strftime('%d/%m/%Y')}"
+    client_id = "e5557a3edfe0413f9babf4fefe546e02"
+    client_secret = "aa8ebb963acc4ffbb79ae4ed396d61ec"
+    redirect_uri = "http://localhost:8502/callback"
+    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope="playlist-modify-private", client_id=client_id,
+                                                   client_secret=client_secret, redirect_uri=redirect_uri))
+
+    playlist = sp.user_playlist_create(user=username, name=playlist_name, public=False)
+    playlist_id = playlist['id']
+
+    # Search for each track and artist and add them to the playlist
+    for index, row in recommended_songs.iterrows():
+        track_name = row['Track']
+        artist_name = row['Artist']
+
+        # Search for the track and artist on Spotify
+        search_query = f"track:{track_name} artist:{artist_name}"
+        result = sp.search(q=search_query, type='track', limit=1)
+
+        if result['tracks']['items']:
+            track_uri = result['tracks']['items'][0]['uri']
+            sp.playlist_add_items(playlist_id, [track_uri])
+
+    st.success(f"Your MoodyTunes Playlist was created successfully! Check it out on Spotify '{playlist_name}'")
 
 
 def get_recommendations(emotion, songs):
@@ -59,10 +89,12 @@ def moody_tunes(folder_path, emotion, songs):
 
             if not emotion_songs.empty:
                 # Randomly select 7 songs
-                random_songs = emotion_songs.sample(n=7)
+                recommended_songs = emotion_songs.sample(n=7)
                 st.markdown('<div style="display: flex; justify-content: center;">', unsafe_allow_html=True)
-                st.dataframe(random_songs[['Track', 'Artist']])
+                st.dataframe(recommended_songs[['Track', 'Artist']])
                 st.markdown('</div>', unsafe_allow_html=True)
+
+                create_spotify_playlist(recommended_songs, '1168069412', detected_emotion) 
 
         else:
             st.write("Try again, folks!")

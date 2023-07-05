@@ -11,7 +11,8 @@
     current mood. By analyzing your facial expressions, MoodyTunes accurately identifies 
     your mood and curates songs that perfectly matches your emotional state.
     
-    With MoodyTunes, discovering music that resonates with your mood has never been easier. Whether you're feeling happy, sad, disgust, fear, angry,  surprise or 
+    With MoodyTunes, discovering music that resonates with your mood has never been easier. 
+    Whether you're feeling happy, sad, disgust, fear, angry,  surprise or 
     neutral, our intelligent machine learning model translates your facial cues into 
     distinct emotional categories. By leveraging this technology, we present you with an 
     extensive collection of songs carefully selected to uplift, inspire, and evoke the 
@@ -20,7 +21,8 @@
 ## Key Features:
     
     - Facial Recognition:
-    Our machine learning model recognizes and interprets your facial expressions, capturing your current mood.
+    Our machine learning model recognizes and interprets your facial expressions, 
+    capturing your current mood.
   
     - Personalized Recommendations: 
     Based on your detected mood, MoodyTunes generates customized song 

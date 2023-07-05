@@ -1,3 +1,4 @@
+#Importing libraries
 import streamlit as st
 import cv2
 import numpy as np
@@ -10,7 +11,42 @@ from spotipy.oauth2 import SpotifyOAuth
 from tensorflow import keras
 from keras.models import load_model
 from keras.preprocessing.image import img_to_array
+from PIL import Image
+import base64
 
+#Adding homepage image
+homepage_image_path = "homepage_image.png"
+homepage_image = open(homepage_image_path, "rb").read()
+homepage_image_encoded = base64.b64encode(homepage_image).decode()
+homepage_url = "http://localhost:8501/"
+
+st.markdown(
+    """
+    <style>
+    .image-container {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 9999;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Create a container for the image with a JavaScript snippet to refresh the page
+st.markdown(
+    f"""
+    <div class="image-container">
+        <a href="#" onclick="window.location.reload(); return false;">
+            <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="60" height="60">
+        </a>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+#Adding the songs dataframe and the page link for spotify playlist
 songs = pd.read_csv('cleaned_songs.csv')
 os.environ["http://localhost:8502/callback"] = "http://localhost:8502/callback"
 
@@ -30,10 +66,10 @@ detected_emotion = None  # Variable to store the detected emotion
 
 def create_spotify_playlist(recommended_songs, username, emotion):
     # Create a new playlist
-    playlist_name = f"Moody Tunes for the {emotion} day - {time.strftime('%d/%m/%Y')}"
-    client_id = "e5557a3edfe0413f9babf4fefe546e02"
-    client_secret = "aa8ebb963acc4ffbb79ae4ed396d61ec"
-    redirect_uri = "http://localhost:8502/callback"
+    playlist_name = f"MoodyTunes for a {emotion} day - {time.strftime('%d/%m/%Y')}"
+    client_id = os.environ.get("SPOTIFY_CLIENT_ID")
+    client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET")
+    redirect_uri = os.environ.get("SPOTIFY_REDIRECT_URI")
     sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope="playlist-modify-private", client_id=client_id,
                                                    client_secret=client_secret, redirect_uri=redirect_uri))
 
@@ -53,8 +89,9 @@ def create_spotify_playlist(recommended_songs, username, emotion):
             track_uri = result['tracks']['items'][0]['uri']
             sp.playlist_add_items(playlist_id, [track_uri])
 
-    st.success(f"Your MoodyTunes Playlist was created successfully! Check it out on Spotify '{playlist_name}'")
-
+#Add info if it's successful
+    st.success(f"Success! :ballot_box_with_check:")
+    st.success(f" Check it out on Spotify your '{playlist_name}'")
 
 def get_recommendations(emotion, songs):
     emotion_songs = songs[songs['Mood'].str.lower() == emotion.lower()]
@@ -79,10 +116,6 @@ def moody_tunes(folder_path, emotion, songs):
         match = re.search(r'^(.*?)---', last_file)
         if match:
             detected_emotion = match.group(1).lower()
-
-            if detected_emotion != emotion.lower():
-                st.write("Please wait while we analyze your mood...")
-                return
 
             # Filter songs by mood/emotion
             emotion_songs = songs[songs['Mood'].str.lower() == detected_emotion.lower()]
@@ -130,7 +163,8 @@ def main():
             if ret:
                 labels = []
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                faces = face_classifier.detectMultiScale(gray)
+                faces = face_classifier.detectMultiScale(gray, minNeighbors=2)
+
 
                 if len(faces) > 0:
                     (x, y, w, h) = faces[0]  # Consider the first detected face only
@@ -149,16 +183,14 @@ def main():
                         cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 2)
 
                         detected_emotion = label  # Store the detected emotion
-                    else:
-                        cv2.putText(frame, 'No Faces', (30, 80), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 2)
-                        detected_emotion = None
+                        st.warning('Great job! :thumbsup:') 
+
                 else:
-                    cv2.putText(frame, 'No Faces', (30, 80), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 2)
                     detected_emotion = None
+                    st.warning('Try again, folks! :pick:')
 
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                st.write('Great job!')  # Display "Great job!" and the captured image
                 st.image(frame_rgb, channels="RGB")
                 if detected_emotion is not None:
                     # Save the captured image with emotion and timestamp
@@ -172,9 +204,6 @@ def main():
                     st.subheader(f"For your {detected_emotion} mood, your tunes are:")
                     songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs data
                     moody_tunes(picture_folder, detected_emotion, songs_df)
-                else:
-                    st.warning("No faces detected. Please try again,folks!")
-
 
 if __name__ == "__main__":
     main()

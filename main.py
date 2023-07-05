@@ -90,29 +90,3 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
-
-def moody_tunes(folder_path, emotion, songs):
-# path for the folder with the pictures
-    files = os.listdir(folder_path)
-
-# Sorting the files by their modified time in descending order
-    sorted_files = sorted(files, key=lambda x: os.path.getmtime(os.path.join(folder_path, x)), reverse=True)
-    
-    if sorted_files:
-        last_file = sorted_files[-1] #to have the last one for sure!
-
-    # Extract the emotion from the last added file name
-    match = re.search(r'^(.*?)---', sorted_files[0])
-    if match:
-        emotion = match.group(1).lower()
-        print(f"For your {emotion} mood, your tunes are:")
-        # Filter songs by mood
-        emotion_songs = songs[songs['Mood'].str.lower() == emotion]
-        # Randomly select 7 songs
-        random_songs = emotion_songs.sample(n=7)
-        # Print the songs
-        print(random_songs[['Track', 'Artist']].to_string(index=False))
-    else:
-        print("Try again folks.")
-
-        moody_tunes(folder_path, emotion, songs)

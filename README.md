@@ -20,16 +20,17 @@
 ## Key Features:
     
     - Facial Recognition:
-   Our machine learning model recognizes and interprets your facial expressions, capturing your current mood.
+    Our machine learning model recognizes and interprets your facial expressions, capturing your current mood.
   
     - Personalized Recommendations: 
-    Based on your detected mood, MoodyTunes generates customized song recommendations tailored specifically to you.
+    Based on your detected mood, MoodyTunes generates customized song 
+    recommendations tailored specifically to you.
 
     - Spotify Playlist: 
     Creates a playlist on Spotify based on the personalized recommendations
     
-    Note: The facial recognition technology used by MoodyTunes respects your privacy and 
-    does not share any personal data. Your facial expressions are 
+    Note: The facial recognition technology used by MoodyTunes respects your privacy and does 
+    not share any personal data. Your facial expressions are 
     solely used for the purpose of determining your mood and 
     providing accurate song recommendations.
     
@@ -46,4 +47,5 @@
     
 ## Contact
     
-    For any further question or comment you can contact me through https://www.linkedin.com/in/diogocapitao/
+    For any further question or comment you can contact me 
+    through https://www.linkedin.com/in/diogocapitao/

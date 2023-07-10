@@ -50,19 +50,19 @@ st.markdown(
 songs = pd.read_csv('cleaned_songs.csv')
 os.environ["http://localhost:8502/callback"] = "http://localhost:8502/callback"
 
-
 # Path for the model
 face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 classifier = load_model('model.h5')
 
+#defiying emotion clusters and the variable to save the detected emotion
 emotion_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Sad', 'Surprise']
+detected_emotion = None  # Variable to store the detected emotion
 
 # Adding a countdown
 countdown_time = 3  # Set the countdown time in seconds
 countdown_start = False  # Flag to indicate if countdown has started
 countdown_end_time = None  # Variable to store the countdown end time
 detected_emotion = None  # Variable to store the detected emotion
-
 
 def create_spotify_playlist(recommended_songs, username, emotion):
     # Create a new playlist
@@ -132,7 +132,6 @@ def moody_tunes(folder_path, emotion, songs):
         else:
             st.write("Try again, folks!")
 
-
 def main():
     global countdown_start, countdown_end_time  # Mark variables as global
     st.title(":headphones: Moody Tunes :headphones:")
@@ -142,19 +141,25 @@ def main():
     check_mood_button = st.button("Let's capture your mood", help="Click here to check your mood")
 
     if check_mood_button:
+        loading = st.empty()
+        loading.write("Capturing your mood...")
+        
         countdown_start = True
         countdown_end_time = time.time() + countdown_time
+        
 
     if countdown_start:
+        progress_bar = st.progress(0)
         while countdown_start and time.time() < countdown_end_time:
-            countdown_remaining = int(countdown_end_time - time.time()) + 1
-            if countdown_remaining > 0:
-                countdown_text = str(countdown_remaining)
-                st.text(countdown_text)
-            time.sleep(1)  # Add a small delay to avoid the continuous loop
+            countdown_remaining = countdown_end_time - time.time()
+            progress = int(((countdown_time - countdown_remaining) / countdown_time) * 100)
+            progress_bar.progress(progress)
+            time.sleep(0.1)  # Add a small delay to avoid the continuous loop
 
         if countdown_start and time.time() >= countdown_end_time:
             countdown_start = False  # Reset the countdown
+            progress_bar.empty()  # Remove the progress bar
+            
 
             cap = cv2.VideoCapture(0)
             ret, frame = cap.read()
@@ -204,6 +209,7 @@ def main():
                     st.subheader(f"For your {detected_emotion} mood, your tunes are:")
                     songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs data
                     moody_tunes(picture_folder, detected_emotion, songs_df)
+
 
 if __name__ == "__main__":
     main()

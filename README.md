@@ -43,7 +43,7 @@
     Songs: 
     https://www.kaggle.com/datasets/musicblogger/spotify-music-data-to-identify-the-moods
     
-    Facial recogniziton: 
+    Facial Recognition: 
     https://www.kaggle.com/datasets/jonathanoheix/face-expression-recognition-dataset
     
     

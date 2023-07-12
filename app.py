@@ -28,7 +28,6 @@ background: linear-gradient(338deg, rgba(2,0,36,1) 0%, rgba(25,73,117,1) 79%, rg
 
 st.markdown(page_bg,unsafe_allow_html=True)
 
-
 #Adding homepage image
 homepage_image_path = "homepage_image.png"
 homepage_image = open(homepage_image_path, "rb").read()
@@ -232,6 +231,7 @@ def main():
     # Release the camera and clean up
     if cap is not None:
         cap.release()
+
 
 if __name__ == "__main__":
     main()

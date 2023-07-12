@@ -13,6 +13,7 @@ from keras.models import load_model
 from keras.preprocessing.image import img_to_array
 from PIL import Image
 import base64
+import subprocess
 
 #Adding background
 page_bg="""

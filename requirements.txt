@@ -1,1 +1,15 @@
 opencv-python-headless==4.6.0.66
+streamlit as st
+cv2
+numpy
+time
+os
+re
+pandas
+spotipy
+SpotifyOAuth
+tensorflow
+keras
+PIL
+base64
+subprocess

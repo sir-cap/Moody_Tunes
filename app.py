@@ -16,7 +16,6 @@ import base64
 import subprocess
 
 
-
 # Adding background
 page_bg = """
 <style>
@@ -27,6 +26,12 @@ background: radial-gradient(circle, rgba(2, 0, 36, 1) 0%, rgba(8, 8, 109, 1) 60%
 }
 </style>
 """
+
+primaryColor="#c9c9c9"
+backgroundColor="#04044c"
+secondaryBackgroundColor="#04044c"
+textColor="#c9c9c9"
+
 
 # Adding the songs dataframe and the page link for spotify playlist
 songs = pd.read_csv('cleaned_songs.csv')

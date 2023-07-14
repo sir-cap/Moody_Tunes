@@ -171,7 +171,7 @@ def main():
             f"""
             <div class="image-container">
                 <a href="#" onclick="window.location.reload(); return false;">
-                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="125" height="125">
+                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="115" height="115">
                 </a>
             </div>
             """,
@@ -285,7 +285,7 @@ def main():
             f"""
             <div class="image-container">
                 <a href="#" onclick="window.location.reload(); return false;">
-                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="125" height="125">
+                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="115" height="115">
                 </a>
             </div>
             """,

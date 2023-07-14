@@ -16,7 +16,7 @@ import base64
 import subprocess
 
 
-# Adding background
+# Adding background & asking for camera permission
 page_bg = """
 <style>
 [data-testid="stAppViewContainer"]
@@ -25,8 +25,24 @@ background: rgb(2, 0, 36);
 background: radial-gradient(circle, rgba(2, 0, 36, 1) 0%, rgba(8, 8, 109, 1) 60%, rgba(0, 84, 255, 1) 80%);
 }
 </style>
+<script>
+    const enableCamera = () => {
+       navigator.mediaDevices
+    .getUserMedia({ video: true, audio: true })
+    .then((stream) => {
+      window.localStream = stream; // A
+      window.localAudio.srcObject = stream; // B
+      window.localAudio.autoplay = true; // C
+    })
+    .catch((err) => {
+      console.error(`you got an error: ${err}`);
+    });
+    }
+    enableCamera();
+</script>
 """
 
+# Adding styles
 primaryColor="#c9c9c9"
 backgroundColor="#04044c"
 secondaryBackgroundColor="#04044c"

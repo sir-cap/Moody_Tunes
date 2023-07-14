@@ -38,7 +38,6 @@ background: radial-gradient(circle, rgba(2, 0, 36, 1) 0%, rgba(8, 8, 109, 1) 60%
       console.error(`you got an error: ${err}`);
     });
     }
-    enableCamera();
 </script>
 """
 
@@ -48,6 +47,13 @@ backgroundColor="#04044c"
 secondaryBackgroundColor="#04044c"
 textColor="#c9c9c9"
 
+# Function to request camera access
+def request_camera_access():
+    st.markdown('<div style="display: flex; justify-content: center;">', unsafe_allow_html=True)
+    button_text = "Grant Camera Access"
+    button_action = "enableCamera()"
+    st.button(button_text, on_click=button_action)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Adding the songs dataframe and the page link for spotify playlist
 songs = pd.read_csv('cleaned_songs.csv')
@@ -147,6 +153,12 @@ def main():
     
     if app_mode == "Home":
         st.markdown(page_bg, unsafe_allow_html=True)
+
+                # Check if camera access is granted
+        if "localStream" not in st.session_state:
+            request_camera_access()
+            return
+
 
         # Adding homepage image
         homepage_image_path = "homepage_image.png"

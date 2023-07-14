@@ -15,6 +15,8 @@ from PIL import Image
 import base64
 import subprocess
 
+
+
 # Adding background
 page_bg = """
 <style>

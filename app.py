@@ -16,7 +16,7 @@ import cloudinary.uploader
 import cloudinary.api
 import base64
 import subprocess
-
+from av import VideoFrame
 
 # Adding background & asking for camera permission
 page_bg = """
@@ -29,32 +29,38 @@ background: radial-gradient(circle, rgba(2, 0, 36, 1) 0%, rgba(8, 8, 109, 1) 60%
 </style>
 <script>
     const enableCamera = () => {
-       navigator.mediaDevices
-    .getUserMedia({ video: true, audio: true })
-    .then((stream) => {
-      window.localStream = stream; // A
-      window.localAudio.srcObject = stream; // B
-      window.localAudio.autoplay = true; // C
-    })
-    .catch((err) => {
-      console.error(`you got an error: ${err}`);
-    });
+        const constraints = {
+            video: true,
+            audio: true
+        };
+        const video = document.querySelector('video');
+
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then((stream) => {
+                video.srcObject = stream;
+                window.localStream = stream;
+                window.localAudio.srcObject = stream;
+                window.localAudio.autoplay = true;
+            })
+            .catch((err) => {
+                console.error(`you got an error: ${err}`);
+            });
     }
     enableCamera();
 </script>
 """
 
 # Adding styles
-primaryColor="#c9c9c9"
-backgroundColor="#04044c"
-secondaryBackgroundColor="#04044c"
-textColor="#c9c9c9"
+primaryColor = "#c9c9c9"
+backgroundColor = "#04044c"
+secondaryBackgroundColor = "#04044c"
+textColor = "#c9c9c9"
 
 # Initialize Cloudinary configuration
-cloudinary.config( 
-  cloud_name = "dpylcpsoo", 
-  api_key = "874926159578349", 
-  api_secret = "phLxggqDlqsgWFpVwTwLk15Hw88" 
+cloudinary.config(
+    cloud_name="dpylcpsoo",
+    api_key="YOUR_API_KEY",
+    api_secret="YOUR_API_SECRET"
 )
 
 # Function to save the captured image on Cloudinary
@@ -62,7 +68,7 @@ def save_image_on_cloudinary(image_path):
     response = cloudinary.uploader.upload(image_path)
     return response['secure_url']
 
-# Adding the songs dataframe and the page link for spotify playlist
+# Adding the songs dataframe and the page link for Spotify playlist
 songs = pd.read_csv('cleaned_songs.csv')
 os.environ["http://localhost:8502/callback"] = "http://localhost:8502/callback"
 
@@ -157,7 +163,7 @@ def main():
     st.sidebar.title("Navigation")
 
     app_mode = st.sidebar.selectbox("Choose a page", ["Home", "About Moody Tunes"])
-    
+
     if app_mode == "Home":
         st.markdown(page_bg, unsafe_allow_html=True)
 
@@ -172,7 +178,7 @@ def main():
             <style>
             .image-container {
                 position: absolute;
-                top: q0px;
+                top: 0px;
                 right: 10px;
                 z-index: 9999;
             }
@@ -288,7 +294,7 @@ def main():
             <style>
             .image-container {
                 position: absolute;
-                top: q0px;
+                top: 0px;
                 right: 10px;
                 z-index: 9999;
             }

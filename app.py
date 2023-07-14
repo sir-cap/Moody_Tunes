@@ -15,50 +15,18 @@ from PIL import Image
 import base64
 import subprocess
 
-#Adding background
-page_bg="""
+# Adding background
+page_bg = """
 <style>
 [data-testid="stAppViewContainer"]
 {
-background: rgb(2,0,36);
-background: linear-gradient(338deg, rgba(2,0,36,1) 0%, rgba(25,73,117,1) 79%, rgba(84,112,167,1) 99%)
+background: rgb(2, 0, 36);
+background: radial-gradient(circle, rgba(2, 0, 36, 1) 0%, rgba(8, 8, 109, 1) 60%, rgba(0, 84, 255, 1) 80%);
 }
 </style>
 """
 
-st.markdown(page_bg,unsafe_allow_html=True)
-
-#Adding homepage image
-homepage_image_path = "homepage_image.png"
-homepage_image = open(homepage_image_path, "rb").read()
-homepage_image_encoded = base64.b64encode(homepage_image).decode()
-homepage_url = "http://localhost:8501"
-
-st.markdown( # to costumize the logo on the page using HTML & CSS
-    """
-    <style>
-    .image-container {
-        position: absolute;
-        top: q0px;
-        right: 10px;
-        z-index: 9999;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-st.markdown(
-    f"""
-    <div class="image-container">
-        <a href="#" onclick="window.location.reload(); return false;">
-            <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="100" height="100">
-        </a>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-#Adding the songs dataframe and the page link for spotify playlist
+# Adding the songs dataframe and the page link for spotify playlist
 songs = pd.read_csv('cleaned_songs.csv')
 os.environ["http://localhost:8502/callback"] = "http://localhost:8502/callback"
 
@@ -66,7 +34,7 @@ os.environ["http://localhost:8502/callback"] = "http://localhost:8502/callback"
 face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 classifier = load_model('model.h5')
 
-#defiying emotion clusters and the variable to save the detected emotion
+# Defining emotion clusters and the variable to save the detected emotion
 emotion_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Sad', 'Surprise']
 detected_emotion = None  # Variable to store the detected emotion
 
@@ -76,7 +44,7 @@ countdown_start = False  # Flag to indicate if countdown has started
 countdown_end_time = None  # Variable to store the countdown end time
 detected_emotion = None  # Variable to store the detected emotion
 
-#Function to create a spotify playlist usinf the recommended songs from the cleaned_songs df
+# Function to create a Spotify playlist using the recommended songs from the cleaned_songs df
 def create_spotify_playlist(recommended_songs, username, emotion):
     # Create a new playlist
     playlist_name = f"MoodyTunes for a {emotion} day - {time.strftime('%d/%m/%Y')}"
@@ -106,7 +74,7 @@ def create_spotify_playlist(recommended_songs, username, emotion):
     playlist_url = playlist['external_urls']['spotify']
     st.subheader(f"Listen to your Moody Tunes on [Spotify]({playlist_url})")
 
-#Function to match the songs moods with the captured images mood
+# Function to match the songs moods with the captured images mood
 def get_recommendations(emotion, songs):
     emotion_songs = songs[songs['Mood'].str.lower() == emotion.lower()]
 
@@ -116,7 +84,7 @@ def get_recommendations(emotion, songs):
     else:
         return pd.DataFrame()
 
-#Function to detect the emotions, save the image and get the name of the emotion
+# Function to detect the emotions, save the image and get the name of the emotion
 def moody_tunes(folder_path, emotion, songs):
     # Get the list of files in the folder
     files = os.listdir(folder_path)
@@ -147,91 +115,175 @@ def moody_tunes(folder_path, emotion, songs):
             st.write("Try again, folks!")
 
 
-#function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
+# Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
 def main():
     global countdown_start, countdown_end_time  # Mark variables as global
-    st.title(":headphones: Moody Tunes :headphones:")
-    st.subheader("Get song recommendations based on your face mood")
-    st.divider()
+    st.sidebar.title("Navigation")
 
-    # Create a button to start the mood detection
-    check_mood_button = st.button("Let's capture your mood", help="Click here to start")
-    cap = None  # Initialize the cap variable
+    app_mode = st.sidebar.selectbox("Choose a page", ["Home", "About Moody Tunes"])
+    
+    if app_mode == "Home":
+        st.markdown(page_bg, unsafe_allow_html=True)
 
-    if check_mood_button:
-        loading = st.empty()
-        loading.write("Capturing your mood...")
-        countdown_start = True
-        countdown_end_time = time.time() + countdown_time
+        # Adding homepage image
+        homepage_image_path = "homepage_image.png"
+        homepage_image = open(homepage_image_path, "rb").read()
+        homepage_image_encoded = base64.b64encode(homepage_image).decode()
+        homepage_url = "http://localhost:8501"
 
-        # Initialize the camera
-        cap = cv2.VideoCapture(0)
+        st.markdown(
+            """
+            <style>
+            .image-container {
+                position: absolute;
+                top: q0px;
+                right: 10px;
+                z-index: 9999;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f"""
+            <div class="image-container">
+                <a href="#" onclick="window.location.reload(); return false;">
+                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="125" height="125">
+                </a>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.title("MOODY TUNES")
+        st.subheader(":headphones: Get song recommendations based on your face mood")
+        st.divider()
 
-    if countdown_start:
-        progress_bar = st.progress(0)
-        while countdown_start and time.time() < countdown_end_time:
-            countdown_remaining = countdown_end_time - time.time()
-            progress = int(((countdown_time - countdown_remaining) / countdown_time) * 100)
-            progress_bar.progress(progress)
-            time.sleep(0.1)  # Add a small delay to avoid the continuous loop
+        # Create a button to start the mood detection
+        check_mood_button = st.button("Let's capture your mood", help="Click here to start")
 
-        if countdown_start and time.time() >= countdown_end_time:
-            countdown_start = False  # Reset the countdown
-            progress_bar.empty()  # Remove the progress bar
+        st.markdown('</div>', unsafe_allow_html=True)
+        cap = None  # Initialize the cap variable
 
-            loading.empty()  # Clear the loading message
+        if check_mood_button:
+            loading = st.empty()
+            loading.write("Capturing your mood...")
+            countdown_start = True
+            countdown_end_time = time.time() + countdown_time
 
-            if cap is not None:
-                # Read a frame from the camera
-                ret, frame = cap.read()
+            # Initialize the camera
+            cap = cv2.VideoCapture(0)
 
-                if ret:
-                    labels = []
-                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    faces = face_classifier.detectMultiScale(gray, minNeighbors=2)
+            if countdown_start:
+                progress_bar = st.progress(0)
+                while countdown_start and time.time() < countdown_end_time:
+                    countdown_remaining = countdown_end_time - time.time()
+                    progress = int(((countdown_time - countdown_remaining) / countdown_time) * 100)
+                    progress_bar.progress(progress)
+                    time.sleep(0.1)  # Add a small delay to avoid the continuous loop
 
-                    if len(faces) > 0:
-                        (x, y, w, h) = faces[0]  # Consider the first detected face only
-                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
-                        roi_gray = gray[y:y + h, x:x + w]
-                        roi_gray = cv2.resize(roi_gray, (48, 48), interpolation=cv2.INTER_AREA)
+                if countdown_start and time.time() >= countdown_end_time:
+                    countdown_start = False  # Reset the countdown
+                    progress_bar.empty()  # Remove the progress bar
 
-                        if np.sum([roi_gray]) != 0:
-                            roi = roi_gray.astype('float') / 255.0
-                            roi = img_to_array(roi)
-                            roi = np.expand_dims(roi, axis=0)
+                    loading.empty()  # Clear the loading message
 
-                            prediction = classifier.predict(roi)[0]
-                            label = emotion_labels[prediction.argmax()]
-                            label_position = (x, y - 11)
-                            cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 2)
+                    if cap is not None:
+                        # Read a frame from the camera
+                        ret, frame = cap.read()
 
-                            detected_emotion = label  # Store the detected emotion
-                            st.success('Great job! :thumbsup:')
-                        else:
-                            detected_emotion = None
-                            st.warning('Try again, folks! :pick:')
+                        if ret:
+                            labels = []
+                            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                            faces = face_classifier.detectMultiScale(gray, minNeighbors=2)
 
-                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                        st.image(frame_rgb, channels="RGB")
+                            if len(faces) > 0:
+                                (x, y, w, h) = faces[0]  # Consider the first detected face only
+                                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
+                                roi_gray = gray[y:y + h, x:x + w]
+                                roi_gray = cv2.resize(roi_gray, (48, 48), interpolation=cv2.INTER_AREA)
 
-                        if detected_emotion is not None:
-                            # Save the captured image with emotion and timestamp
-                            picture_folder = "pictures"
-                            os.makedirs(picture_folder, exist_ok=True)
-                            timestamp = time.strftime("%Y%m%d-%H%M%S")
-                            picture_filename = f"{detected_emotion}---{timestamp}.jpg"
-                            picture_path = os.path.join(picture_folder, picture_filename)
-                            cv2.imwrite(picture_path, frame)
+                                if np.sum([roi_gray]) != 0:
+                                    roi = roi_gray.astype('float') / 255.0
+                                    roi = img_to_array(roi)
+                                    roi = np.expand_dims(roi, axis=0)
 
-                            st.subheader(f"For your {detected_emotion} mood, your tunes are:")
-                            songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs dataframe
-                            moody_tunes(picture_folder, detected_emotion, songs_df)
+                                    prediction = classifier.predict(roi)[0]
+                                    label = emotion_labels[prediction.argmax()]
+                                    label_position = (x, y - 11)
+                                    cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 2)
 
-    # Release the camera and clean up
-    if cap is not None:
-        cap.release()
+                                    detected_emotion = label  # Store the detected emotion
+                                    st.success('Great job! :thumbsup:')
+                                else:
+                                    detected_emotion = None
+                                    st.warning('Try again, folks! :pick:')
 
+                                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                                st.image(frame_rgb, channels="RGB")
+
+                                if detected_emotion is not None:
+                                    # Save the captured image with emotion and timestamp
+                                    picture_folder = "pictures"
+                                    os.makedirs(picture_folder, exist_ok=True)
+                                    timestamp = time.strftime("%Y%m%d-%H%M%S")
+                                    picture_filename = f"{detected_emotion}---{timestamp}.jpg"
+                                    picture_path = os.path.join(picture_folder, picture_filename)
+                                    cv2.imwrite(picture_path, frame)
+
+                                    st.subheader(f"For your {detected_emotion} mood, your tunes are:")
+                                    songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs dataframe
+                                    moody_tunes(picture_folder, detected_emotion, songs_df)
+
+                        # Release the camera and clean up
+                        cap.release()
+
+    elif app_mode == "About Moody Tunes":
+        st.markdown(page_bg, unsafe_allow_html=True)
+
+        # Adding homepage image
+        homepage_image_path = "homepage_image.png"
+        homepage_image = open(homepage_image_path, "rb").read()
+        homepage_image_encoded = base64.b64encode(homepage_image).decode()
+        homepage_url = "http://localhost:8501"
+        st.markdown(
+            """
+            <style>
+            .image-container {
+                position: absolute;
+                top: q0px;
+                right: 10px;
+                z-index: 9999;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f"""
+            <div class="image-container">
+                <a href="#" onclick="window.location.reload(); return false;">
+                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="125" height="125">
+                </a>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.title("About Moody Tunes")
+        st.write("Moody Tunes is a user interface that recognizes your mood using your facial expression and gives the user music suggestions from the same mood")
+        st.divider()
+        st.markdown("**How it works:**")
+        st.write("1. Click on the 'Let's capture your mood' button to start the mood detection.")
+        st.write("2. The application will access your device's camera and capture a frame.")
+        st.write("3. It will detect your facial expression and display it on the screen.")
+        st.write("4. Based on your expression, the application will recommend songs that match your mood.")
+        st.write("5. You can listen to the recommended songs on Spotify.")
+        st.divider()
+
+        st.markdown("**Note:**")
+        st.write("For the mood detection to work accurately, ensure that your face is well-illuminated and directly facing the camera.")
+
+        st.warning("For more information, please reach out to us [here](mailto:diogo.capitao.576@gmail.com)")
 
 if __name__ == "__main__":
     main()

@@ -17,6 +17,7 @@ import cloudinary.api
 import base64
 import subprocess
 
+
 # Adding background & asking for camera permission
 page_bg = """
 <style>
@@ -56,6 +57,27 @@ cloudinary.config(
     api_secret="phLxggqDlqsgWFpVwTwLk15Hw88"
 )
 
+#get access to camera
+def get_camera_stream():
+    return """
+    <script>
+    const videoElement = document.createElement('video');
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function(stream) {
+            videoElement.srcObject = stream;
+        })
+        .catch(function(err) {
+            console.error(err);
+        });
+
+    videoElement.setAttribute("width", "100%");
+    videoElement.setAttribute("height", "auto");
+    videoElement.style.objectFit = "cover";
+
+    const cameraContainer = document.getElementById("camera-container");
+    cameraContainer.appendChild(videoElement);
+    </script>
+    """
 # Function to save the captured image on Cloudinary
 def save_image_on_cloudinary(image_path,filename):
     response = cloudinary.uploader.upload(image_path, public_id=filename)
@@ -209,20 +231,8 @@ def main():
 
             try:
                 # Use JavaScript to prompt for camera access
-                video_html = """
-                <video id="camera-stream" width="100%" height="auto" style="object-fit: cover;"></video>
-                <script>
-                navigator.mediaDevices.getUserMedia({ video: true })
-                    .then(function(stream) {
-                        var video = document.getElementById('camera-stream');
-                        video.srcObject = stream;
-                        video.play();
-                    })
-                    .catch(function(err) {
-                        console.error(err);
-                    });
-                </script>
-                """
+                video_html = get_camera_stream()
+                
                 # Initialize the camera
                 cap = cv2.VideoCapture(0)
             except Exception as e:

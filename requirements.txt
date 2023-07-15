@@ -3,7 +3,7 @@ opencv-contrib-python
 numpy
 pandas
 spotipy
-tensorflow=
+tensorflow
 Pillow
 cloudinary
 tensorflow

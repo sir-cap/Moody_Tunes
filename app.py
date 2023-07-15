@@ -57,29 +57,8 @@ cloudinary.config(
     api_secret="phLxggqDlqsgWFpVwTwLk15Hw88"
 )
 
-#get access to camera
-def get_camera_stream():
-    return """
-    <script>
-    const videoElement = document.createElement('video');
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(function(stream) {
-            videoElement.srcObject = stream;
-        })
-        .catch(function(err) {
-            console.error(err);
-        });
-
-    videoElement.setAttribute("width", "100%");
-    videoElement.setAttribute("height", "auto");
-    videoElement.style.objectFit = "cover";
-
-    const cameraContainer = document.getElementById("camera-container");
-    cameraContainer.appendChild(videoElement);
-    </script>
-    """
 # Function to save the captured image on Cloudinary
-def save_image_on_cloudinary(image_path,filename):
+def save_image_on_cloudinary(image_path, filename):
     response = cloudinary.uploader.upload(image_path, public_id=filename)
     return response['secure_url']
 
@@ -170,7 +149,6 @@ def moody_tunes(folder_path, emotion, songs):
         else:
             st.write("Try again, folks!")
 
-
 # Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
 def main():
     global countdown_start, countdown_end_time  # Mark variables as global
@@ -231,7 +209,28 @@ def main():
 
             try:
                 # Use JavaScript to prompt for camera access
-                video_html = get_camera_stream()
+                video_html = """
+                <script>
+                async function getCameraStream() {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        const videoElement = document.createElement('video');
+                        videoElement.srcObject = stream;
+                        videoElement.setAttribute('width', '100%');
+                        videoElement.setAttribute('height', 'auto');
+                        videoElement.style.objectFit = 'cover';
+
+                        const cameraContainer = document.getElementById('camera-container');
+                        cameraContainer.appendChild(videoElement);
+                    } catch (err) {
+                        console.error('Error accessing camera:', err);
+                    }
+                }
+
+                getCameraStream();
+                </script>
+                """
+                st.markdown(video_html, unsafe_allow_html=True)
                 
                 # Initialize the camera
                 cap = cv2.VideoCapture(0)

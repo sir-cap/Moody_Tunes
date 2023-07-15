@@ -1,9 +1,9 @@
-streamlit==1.24.0
-opencv-contrib-python==4.8.0.74
-numpy==1.21.0
-pandas==1.3.0
-spotipy==2.18.0
-tensorflow==2.7.0
-Pillow==8.2.0
-cloudinary==1.29.0
-tensorflow-macos==2.7.0
+streamlit
+opencv-contrib-python
+ numpy
+pandas
+spotipy
+tensorflow
+Pillow
+cloudinary
+tensorflow-macos

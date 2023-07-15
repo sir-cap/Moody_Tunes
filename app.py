@@ -196,7 +196,7 @@ def main():
             f"""
             <div class="image-container">
                 <a href="#" onclick="window.location.reload(); return false;">
-                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="110" height="110">
+                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="100" height="100">
                 </a>
             </div>
             """,

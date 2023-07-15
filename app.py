@@ -57,8 +57,21 @@ cloudinary.config(
     api_secret="phLxggqDlqsgWFpVwTwLk15Hw88"
 )
 
+#get access to camera
+def get_camera_stream(video_feed):
+    js = (
+        "const videoElement = document.createElement('video');\n"
+        "navigator.mediaDevices.getUserMedia({ video: true })\n"
+        ".then(function(stream) { videoElement.srcObject = stream; })\n"
+        ".catch(function(err) { console.error(err); });\n"
+        "videoElement.setAttribute('width', '100%');\n"
+        "videoElement.style.objectFit = 'cover';\n"
+        "document.getElementById('" + video_feed + "').appendChild(videoElement);\n"
+    )
+    return js
+
 # Function to save the captured image on Cloudinary
-def save_image_on_cloudinary(image_path, filename):
+def save_image_on_cloudinary(image_path,filename):
     response = cloudinary.uploader.upload(image_path, public_id=filename)
     return response['secure_url']
 
@@ -149,6 +162,7 @@ def moody_tunes(folder_path, emotion, songs):
         else:
             st.write("Try again, folks!")
 
+
 # Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
 def main():
     global countdown_start, countdown_end_time  # Mark variables as global
@@ -198,6 +212,7 @@ def main():
         cap = None  # Initialize the cap variable
         captured_image = st.empty()  # Placeholder for the captured image
 
+        
         if check_mood_button:
             loading = st.empty()
             loading.write("Capturing your mood...")
@@ -205,33 +220,9 @@ def main():
             countdown_end_time = time.time() + countdown_time
 
             # Request camera access from the user
-            video_container = st.empty()
+            cap = cv2.VideoCapture(0)
 
             try:
-                # Use JavaScript to prompt for camera access
-                video_html = """
-                <script>
-                async function getCameraStream() {
-                    try {
-                        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                        const videoElement = document.createElement('video');
-                        videoElement.srcObject = stream;
-                        videoElement.setAttribute('width', '100%');
-                        videoElement.setAttribute('height', 'auto');
-                        videoElement.style.objectFit = 'cover';
-
-                        const cameraContainer = document.getElementById('camera-container');
-                        cameraContainer.appendChild(videoElement);
-                    } catch (err) {
-                        console.error('Error accessing camera:', err);
-                    }
-                }
-
-                getCameraStream();
-                </script>
-                """
-                st.markdown(video_html, unsafe_allow_html=True)
-                
                 # Initialize the camera
                 cap = cv2.VideoCapture(0)
             except Exception as e:
@@ -251,113 +242,74 @@ def main():
 
                 loading.empty()  # Clear the loading message
 
-                if cap is not None:
-                    # Read a frame from the camera
-                    ret, frame = cap.read()
 
-                    if ret:
-                        labels = []
-                        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                        faces = face_classifier.detectMultiScale(gray, minNeighbors=2)
+        if capture_mood_button:
+            # Request camera access from the user
+            cap = cv2.VideoCapture(0)
 
-                        if len(faces) > 0:
-                            (x, y, w, h) = faces[0]  # Consider the first detected face only
-                            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
-                            roi_gray = gray[y:y + h, x:x + w]
-                            roi_gray = cv2.resize(roi_gray, (48, 48), interpolation=cv2.INTER_AREA)
+            if not cap.isOpened():
+                st.error("Error: Unable to access the camera. Please check your camera settings.")
+                return
 
-                            if np.sum([roi_gray]) != 0:
-                                roi = roi_gray.astype('float') / 255.0
-                                roi = img_to_array(roi)
-                                roi = np.expand_dims(roi, axis=0)
+            ret, frame = cap.read()
+            if ret:
+                cap.release()
+                labels = []
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                faces = face_classifier.detectMultiScale(gray, minNeighbors=2)
 
-                                prediction = classifier.predict(roi)[0]
-                                label = emotion_labels[prediction.argmax()]
-                                label_position = (x, y - 11)
-                                cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 2)
+                if len(faces) > 0:
+                    (x, y, w, h) = faces[0]  # Consider the first detected face only
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
+                    roi_gray = gray[y:y + h, x:x + w]
+                    roi_gray = cv2.resize(roi_gray, (48, 48), interpolation=cv2.INTER_AREA)
 
-                                detected_emotion = label  # Store the detected emotion
-                                st.success('Great job! :thumbsup:')
-                                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
+                    if np.sum([roi_gray]) != 0:
+                        roi = roi_gray.astype('float') / 255.0
+                        roi = img_to_array(roi)
+                        roi = np.expand_dims(roi, axis=0)
 
-                            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        prediction = classifier.predict(roi)[0]
+                        label = emotion_labels[prediction.argmax()]
+                        label_position = (x, y - 11)
+                        cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 2)
 
-                            if detected_emotion is not None:
-                                # Save the captured image with emotion and timestamp
-                                picture_folder = "pictures"
-                                os.makedirs(picture_folder, exist_ok=True)
-                                timestamp = time.strftime("%Y%m%d-%H%M%S")
-                                picture_filename = f"{detected_emotion}---{timestamp}.jpg"
-                                picture_path = os.path.join(picture_folder, picture_filename)
-                                cv2.imwrite(picture_path, frame)
+                        detected_emotion = label  # Store the detected emotion
+                        st.success('Great job! :thumbsup:')
+                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
 
-                                # Save the image on Cloudinary
-                                cloudinary_url = save_image_on_cloudinary(picture_path, picture_filename)
-                                
-                                # Display the captured image
-                                captured_image.image(frame_rgb, channels="RGB")
-                                
-                                # Create a container for the recommended songs and subheader
-                                st.subheader(f"For your {detected_emotion} mood, your tunes are:")
-                                songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs dataframe
-                                moody_tunes(picture_folder, detected_emotion, songs_df)
+                        if detected_emotion is not None:
+                            # Save the captured image with emotion and timestamp
+                            picture_folder = "pictures"
+                            os.makedirs(picture_folder, exist_ok=True)
+                            timestamp = time.strftime("%Y%m%d-%H%M%S")
+                            picture_filename = f"{detected_emotion}---{timestamp}.jpg"
+                            picture_path = os.path.join(picture_folder, picture_filename)
+                            cv2.imwrite(picture_path, frame)
 
-                                # Remove the local image file
-                                os.remove(picture_path)
-                        else: 
-                            detected_emotion = None
-                            st.warning('Try again, folks! :pick:')
+                            # Save the image on Cloudinary
+                            cloudinary_url = save_image_on_cloudinary(picture_path, picture_filename)
 
-                    # Release the camera and clean up
-                    video_container.empty()
+                            # Display the captured image
+                            captured_image.image(frame_rgb, caption=f"Detected Mood: {detected_emotion}", use_column_width=True)
 
-        # Adding about page and the homepage image 
-    elif app_mode == "About Moody Tunes":
-        st.markdown(page_bg, unsafe_allow_html=True) 
+                            # Create a container for the recommended songs and subheader
+                            st.subheader(f"For your {detected_emotion} mood, your tunes are:")
+                            songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs dataframe
+                            recommended_songs = get_recommendations(detected_emotion, songs_df)
+                            if not recommended_songs.empty:
+                                st.dataframe(recommended_songs[['Track', 'Artist']])
+                                create_spotify_playlist(recommended_songs, 'your_spotify_username', detected_emotion)
 
-        homepage_image_path = "homepage_image.png"
-        homepage_image = open(homepage_image_path, "rb").read()
-        homepage_image_encoded = base64.b64encode(homepage_image).decode()
-        homepage_url = "http://localhost:8501"
-        st.markdown(
-            """
-            <style>
-            .image-container {
-                position: absolute;
-                top: 0px;
-                right: 10px;
-                z-index: 9999;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            f"""
-            <div class="image-container">
-                <a href="#" onclick="window.location.reload(); return false;">
-                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="100" height="100">
-                </a>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+                            # Remove the local image file
+                            os.remove(picture_path)
+                    else:
+                        detected_emotion = None
+                        st.warning('Try again, folks! :pick:')
 
-        st.title("About Moody Tunes")
-        st.write("Moody Tunes is a user interface that recognizes your mood using your facial expression and gives the user music suggestions from the same mood")
-        st.divider()
-        st.markdown("**How it works:**")
-        st.write("1. Click on the 'Let's capture your mood' button to start the mood detection.")
-        st.write("2. The application will access your device's camera and capture a frame.")
-        st.write("3. It will detect your facial expression and display it on the screen.")
-        st.write("4. Based on your expression, the application will recommend songs that match your mood.")
-        st.write("5. You can listen to the recommended songs on Spotify.")
-        st.divider()
-
-        st.markdown("**Note:**")
-        st.write("For the mood detection to work accurately, ensure that your face is well-illuminated and directly facing the camera.")
-
-        st.warning("For more information, please reach out to us [here](mailto:diogo.capitao.576@gmail.com)")
+                else:
+                    detected_emotion = None
+                    st.warning('Try again, folks! :pick:')
 
 if __name__ == "__main__":
     main()

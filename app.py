@@ -58,16 +58,22 @@ cloudinary.config(
 )
 
 #get access to camera
-def get_camera_stream(video_feed):
-    js = (
-        "const videoElement = document.createElement('video');\n"
-        "navigator.mediaDevices.getUserMedia({ video: true })\n"
-        ".then(function(stream) { videoElement.srcObject = stream; })\n"
-        ".catch(function(err) { console.error(err); });\n"
-        "videoElement.setAttribute('width', '100%');\n"
-        "videoElement.style.objectFit = 'cover';\n"
-        "document.getElementById('" + video_feed + "').appendChild(videoElement);\n"
-    )
+def get_camera_stream():
+    js = """
+    <script>
+        const videoElement = document.createElement('video');
+        navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function(stream) {
+            videoElement.srcObject = stream;
+        })
+        .catch(function(err) {
+            console.error(err);
+        });
+        videoElement.setAttribute('width', '100%');
+        videoElement.style.objectFit = 'cover';
+        document.getElementById('camera-container').appendChild(videoElement);
+    </script>
+    """
     return js
 
 # Function to save the captured image on Cloudinary
@@ -206,11 +212,14 @@ def main():
         st.subheader(":headphones: Get song recommendations based on your face mood")
         st.divider()
 
+        # Get the camera stream
+        st.markdown(get_camera_stream(), unsafe_allow_html=True)
+
         # Create a button to start the mood detection
         check_mood_button = st.button("Let's capture your mood", help="Click here to start")
         st.markdown('</div>', unsafe_allow_html=True)
         cap = None  # Initialize the cap variable
-        captured_image = st.empty()  # Placeholder for the captured image
+        captured_image = st.empty()
 
         if check_mood_button:  # Corrected the variable name here
             loading = st.empty()
@@ -305,5 +314,48 @@ def main():
                     detected_emotion = None
                     st.warning('Try again, folks! :pick:')
 
+        # Adding about page and the homepage image 
+    elif app_mode == "About Moody Tunes":
+        st.markdown(page_bg, unsafe_allow_html=True) 
+        homepage_image_path = "homepage_image.png"
+        homepage_image = open(homepage_image_path, "rb").read()
+        homepage_image_encoded = base64.b64encode(homepage_image).decode()
+        homepage_url = "http://localhost:8501"
+        st.markdown(
+            """
+            <style>
+            .image-container {
+                position: absolute;
+                top: 0px;
+                right: 10px;
+                z-index: 9999;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f"""
+            <div class="image-container">
+                <a href="#" onclick="window.location.reload(); return false;">
+                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="100" height="100">
+                </a>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.title("About Moody Tunes")
+        st.write("Moody Tunes is a user interface that recognizes your mood using your facial expression and gives the user music suggestions from the same mood")
+        st.divider()
+        st.markdown("**How it works:**")
+        st.write("1. Click on the 'Let's capture your mood' button to start the mood detection.")
+        st.write("2. The application will access your device's camera and capture a frame.")
+        st.write("3. It will detect your facial expression and display it on the screen.")
+        st.write("4. Based on your expression, the application will recommend songs that match your mood.")
+        st.write("5. You can listen to the recommended songs on Spotify.")
+        st.divider()
+        st.markdown("**Note:**")
+        st.write("For the mood detection to work accurately, ensure that your face is well-illuminated and directly facing the camera.")
+        st.warning("For more information, please reach out to us [here](mailto:diogo.capitao.576@gmail.com)")
 if __name__ == "__main__":
     main()

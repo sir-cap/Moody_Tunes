@@ -63,7 +63,7 @@ def save_image_on_cloudinary(image_path,filename):
 
 # Adding the songs dataframe and the page link for Spotify playlist
 songs = pd.read_csv('cleaned_songs.csv')
-os.environ["http://localhost:8502/callback"] = "http://localhost:8502/callback"
+os.environ["http://localhost:8501/callback"] = "http://localhost:8502/callback"
 
 # Path for the model
 face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -196,10 +196,11 @@ def main():
         check_mood_button = st.button("Let's capture your mood", help="Click here to start")
         st.markdown('</div>', unsafe_allow_html=True)
         cap = None  # Initialize the cap variable
+        captured_image = st.empty()  # Placeholder for the captured image
 
         if check_mood_button:
             loading = st.empty()
-            loading.write("Requesting camera access...")
+            loading.write("Capturing your mood...")
             countdown_start = True
             countdown_end_time = time.time() + countdown_time
 
@@ -222,8 +223,6 @@ def main():
                     });
                 </script>
                 """
-                video_container.write(st.components.v1.html(video_html, height=500))
-
                 # Initialize the camera
                 cap = cv2.VideoCapture(0)
             except Exception as e:
@@ -286,15 +285,13 @@ def main():
                                 # Save the image on Cloudinary
                                 cloudinary_url = save_image_on_cloudinary(picture_path, picture_filename)
                                 
-                                # Create a container for the captured image and subheader
-                                image_container = st.container()
-                            
-                                # Display the playlist created
-                                with image_container:
-                                    st.image(frame_rgb, channels="RGB")
-                                    st.subheader(f"For your {detected_emotion} mood, your tunes are:")
-                                    songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs dataframe
-                                    moody_tunes(picture_folder, detected_emotion, songs_df)
+                                # Display the captured image
+                                captured_image.image(frame_rgb, channels="RGB")
+                                
+                                # Create a container for the recommended songs and subheader
+                                st.subheader(f"For your {detected_emotion} mood, your tunes are:")
+                                songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs dataframe
+                                moody_tunes(picture_folder, detected_emotion, songs_df)
 
                                 # Remove the local image file
                                 os.remove(picture_path)
@@ -303,7 +300,7 @@ def main():
                             st.warning('Try again, folks! :pick:')
 
                     # Release the camera and clean up
-                    cap.release()
+                    video_container.empty()
 
         # Adding about page and the homepage image 
     elif app_mode == "About Moody Tunes":

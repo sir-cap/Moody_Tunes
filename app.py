@@ -212,8 +212,7 @@ def main():
         cap = None  # Initialize the cap variable
         captured_image = st.empty()  # Placeholder for the captured image
 
-        
-        if check_mood_button:
+        if check_mood_button:  # Corrected the variable name here
             loading = st.empty()
             loading.write("Capturing your mood...")
             countdown_start = True
@@ -242,16 +241,11 @@ def main():
 
                 loading.empty()  # Clear the loading message
 
-
-        if capture_mood_button:
-            # Request camera access from the user
-            cap = cv2.VideoCapture(0)
-
-            if not cap.isOpened():
-                st.error("Error: Unable to access the camera. Please check your camera settings.")
-                return
-
+        if cap is not None:
+            # Capture mood from the camera
             ret, frame = cap.read()
+            cap.release()
+
             if ret:
                 cap.release()
                 labels = []
@@ -275,10 +269,10 @@ def main():
                         cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 2)
 
                         detected_emotion = label  # Store the detected emotion
-                        st.success('Great job! :thumbsup:')
                         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
 
                         if detected_emotion is not None:
+                            st.success('Great job! :thumbsup:')
                             # Save the captured image with emotion and timestamp
                             picture_folder = "pictures"
                             os.makedirs(picture_folder, exist_ok=True)
@@ -291,7 +285,7 @@ def main():
                             cloudinary_url = save_image_on_cloudinary(picture_path, picture_filename)
 
                             # Display the captured image
-                            captured_image.image(frame_rgb, caption=f"Detected Mood: {detected_emotion}", use_column_width=True)
+                            captured_image.image(frame_rgb, use_column_width=True)
 
                             # Create a container for the recommended songs and subheader
                             st.subheader(f"For your {detected_emotion} mood, your tunes are:")
@@ -299,7 +293,7 @@ def main():
                             recommended_songs = get_recommendations(detected_emotion, songs_df)
                             if not recommended_songs.empty:
                                 st.dataframe(recommended_songs[['Track', 'Artist']])
-                                create_spotify_playlist(recommended_songs, 'your_spotify_username', detected_emotion)
+                                create_spotify_playlist(recommended_songs, '1168069412', detected_emotion)
 
                             # Remove the local image file
                             os.remove(picture_path)

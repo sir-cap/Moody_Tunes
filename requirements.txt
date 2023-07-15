@@ -7,4 +7,3 @@ tensorflow
 Pillow
 cloudinary
 tensorflow
-libgl1-mesa-glx

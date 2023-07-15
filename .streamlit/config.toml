@@ -4,3 +4,8 @@ backgroundColor = "#04044c"
 secondaryBackgroundColor = "#04044c"
 textColor = "#c9c9c9"
 
+[server]
+headless = true
+
+[runner]
+systemDependencies = ["libgl1-mesa-glx"]

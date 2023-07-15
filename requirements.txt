@@ -1,9 +1,9 @@
 streamlit
 opencv-contrib-python
- numpy
+numpy
 pandas
 spotipy
-tensorflow
+tensorflow=
 Pillow
 cloudinary
-tensorflow-macos
+tensorflow

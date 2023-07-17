@@ -57,39 +57,14 @@ cloudinary.config(
     api_secret="phLxggqDlqsgWFpVwTwLk15Hw88"
 )
 
-#get access to camera
-def get_camera_stream():
-    js = """
-    <script>
-        const videoElement = document.createElement('video');
-
-    // Function to handle the user's response to camera permission request
-    function handleUserMedia(stream) {
-        videoElement.srcObject = stream;
-    }
-
-    // Function to handle errors when camera access is denied
-    function handleUserMediaError(error) {
-        console.error('Error accessing the camera:', error);
-    }
-
-    // Check if the browser supports the getUserMedia API
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        // Request camera access from the user
-        navigator.mediaDevices
-        .getUserMedia({ video: true })
-        .then(handleUserMedia) // User granted access, stream is available
-        .catch(handleUserMediaError); // User denied access or some other error occurred
-    } else {
-        console.error('getUserMedia API is not supported in this browser.');
-    }
-
-    videoElement.setAttribute('width', '100%');
-    videoElement.style.objectFit = 'cover';
-    document.getElementById('camera-container').appendChild(videoElement);
-    </script>
-    """
-    return js
+def get_camera_image():
+    st.warning("Please allow camera access to capture your mood, folks! :thumbsup:")
+    
+    # Adjust the size of the container to control the size of the camera input
+    st.markdown('<div id="camera-container" style="width: 640px; height: 480px;"></div>', unsafe_allow_html=True)
+    
+    # Call the st.camera_input() function with the 'label' argument
+    camera_image = st.camera_input(label="Press the button below to capture your mood")
 
 # Function to save the captured image on Cloudinary
 def save_image_on_cloudinary(image_path,filename):
@@ -226,9 +201,6 @@ def main():
         st.title("MOODY TUNES")
         st.subheader(":headphones: Get song recommendations based on your face mood")
         st.divider()
-
-        # Get the camera stream
-        st.markdown(get_camera_stream(), unsafe_allow_html=True)
 
         # Create a button to start the mood detection
         check_mood_button = st.button("Let's capture your mood", help="Click here to start")

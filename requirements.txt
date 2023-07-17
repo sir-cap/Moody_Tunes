@@ -8,3 +8,4 @@ tensorflow
 Pillow
 cloudinary
 tensorflow
+tensorrt

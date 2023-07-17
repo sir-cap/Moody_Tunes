@@ -58,13 +58,9 @@ cloudinary.config(
 )
 
 def get_camera_image():
-    st.warning("Please allow camera access to capture your mood, folks! :thumbsup:")
-    
-    # Adjust the size of the container to control the size of the camera input
-    st.markdown('<div id="camera-container" style="width: 640px; height: 480px;"></div>', unsafe_allow_html=True)
-    
     # Call the st.camera_input() function with the 'label' argument
-    camera_image = st.camera_input(label="Press the button below to capture your mood")
+    camera_image = st.camera_input(label="Press the button 'let's capture your mood' to start")
+    return camera_image
 
 # Function to save the captured image on Cloudinary
 def save_image_on_cloudinary(image_path,filename):
@@ -201,6 +197,9 @@ def main():
         st.title("MOODY TUNES")
         st.subheader(":headphones: Get song recommendations based on your face mood")
         st.divider()
+        
+        # Get the camera image
+        camera_image = get_camera_image()
 
         # Create a button to start the mood detection
         check_mood_button = st.button("Let's capture your mood", help="Click here to start")

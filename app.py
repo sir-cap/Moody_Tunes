@@ -68,20 +68,9 @@ def save_uploaded_image_on_cloudinary(image_bytes, filename):
     return response['secure_url']
 
 def capture_image():
-    cap = cv2.VideoCapture(0)
-
-    if not cap.isOpened():
-        print("Error: Unable to access the camera.")
-        return None
-
-    ret, frame = cap.read()
-    cap.release()
-
-    if ret:
-        return frame
-    else:
-        print("Error: Unable to capture the image from the camera.")
-        return None
+    # Call the st.camera_input() function with the 'label' argument
+    camera_image = st.camera_input(label="Press the button 'Let's capture your mood' to start")
+    return camera_image
 
 # Adding the songs dataframe and the page link for Spotify playlist
 songs = pd.read_csv('cleaned_songs.csv')
@@ -215,7 +204,7 @@ def main():
         st.divider()
 
         # Get the camera image
-        camera_image = get_camera_image()
+        camera_image = capture_image()
 
         # Print the camera image data (for debugging)
         st.write("Camera Image Data:", camera_image)
@@ -227,17 +216,17 @@ def main():
         captured_image = st.empty()
 
         if check_mood_button:
-            captured_frame = capture_image()
-
+            captured_frame = np.array(camera_image)
             if captured_frame is not None:
                 # Save the captured image to Cloudinary
                 image_bytes = cv2.imencode(".jpg", captured_frame)[1].tobytes()
                 timestamp = time.strftime("%Y%m%d-%H%M%S")
-                picture_filename = f"mood_capture_{timestamp}.jpg"
-                cloudinary_url = save_uploaded_image_on_cloudinary(image_bytes, picture_filename)
+                emotion_timestamp_filename = f"{detected_emotion}{timestamp}.jpg"
+                cloudinary_url = save_uploaded_image_on_cloudinary(image_bytes, emotion_timestamp_filename)
 
                 # Display the captured image
                 captured_image.image(captured_frame, channels="BGR", use_column_width=True)
+
 
                 # Perform mood detection and song recommendation based on the uploaded image
                 labels = []

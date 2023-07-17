@@ -80,8 +80,12 @@ def get_camera_stream():
         videoElement.style.objectFit = 'cover';
         document.getElementById('camera-container').appendChild(videoElement);
     }
-    getCameraStream();
-</script>
+
+    // Call the function when the page is loaded
+    window.onload = function() {
+        getCameraStream();
+    };
+  </script>
     """
     return js
 
@@ -220,14 +224,13 @@ def main():
         st.title("MOODY TUNES")
         st.subheader(":headphones: Get song recommendations based on your face mood")
         st.divider()
-          # Create a button to start the mood detection
-        start_mood_detection = st.button("Let's capture your mood", help="Click here to start")
-
+    
         # Get the camera stream
         st.markdown(get_camera_stream(), unsafe_allow_html=True)
       
         cap = None  # Initialize the cap variable
         captured_image = st.empty()
+        start_mood_detection = st.button("Let's capture your mood", help="Click here to start")
 
         if start_mood_detection:  # Corrected the variable name here
             loading = st.empty()

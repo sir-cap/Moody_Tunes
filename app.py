@@ -213,7 +213,7 @@ def main():
         st.title("MOODY TUNES")
         st.subheader(":headphones: Get song recommendations based on your face mood")
         st.divider()
-        
+
         # Get the camera image
         camera_image = get_camera_image()
 
@@ -226,36 +226,23 @@ def main():
         cap = None  # Initialize the cap variable
         captured_image = st.empty()
 
-        if len(faces) > 0:
-                    (x, y, w, h) = faces[0]  # Consider the first detected face only
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
-                    roi_gray = gray[y:y + h, x:x + w]
-                    roi_gray = cv2.resize(roi_gray, (48, 48), interpolation=cv2.INTER_AREA)
+        if check_mood_button:
+            captured_frame = capture_image()
 
-                    if np.sum([roi_gray]) != 0:
-                        roi = roi_gray.astype('float') / 255.0
-                        roi = img_to_array(roi)
-                        roi = np.expand_dims(roi, axis=0)
+            if captured_frame is not None:
+                # Save the captured image to Cloudinary
+                image_bytes = cv2.imencode(".jpg", captured_frame)[1].tobytes()
+                timestamp = time.strftime("%Y%m%d-%H%M%S")
+                picture_filename = f"mood_capture_{timestamp}.jpg"
+                cloudinary_url = save_uploaded_image_on_cloudinary(image_bytes, picture_filename)
 
-                        prediction = classifier.predict(roi)[0]
-                        label = emotion_labels[prediction.argmax()]
-                        label_position = (x, y - 11)
-                        cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 2)
+                # Display the captured image
+                captured_image.image(captured_frame, channels="BGR", use_column_width=True)
 
-                        detected_emotion = label  # Store the detected emotion
-                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
-
-                        if detected_emotion is not None:
-                            st.success('Great job! :thumbsup:')
-                            st.image(frame_rgb, caption=f"Detected Emotion: {detected_emotion}", use_column_width=True)
-
-                            # Create a container for the recommended songs and subheader
-                            st.subheader(f"For your {detected_emotion} mood, your tunes are:")
-                            songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs dataframe
-                            recommended_songs = get_recommendations(detected_emotion, songs_df)
-                            if not recommended_songs.empty:
-                                st.dataframe(recommended_songs[['Track', 'Artist']])
-                                create_spotify_playlist(recommended_songs, '1168069412', detected_emotion)
+                # Perform mood detection and song recommendation based on the uploaded image
+                labels = []
+                gray = cv2.cvtColor(captured_frame, cv2.COLOR_BGR2GRAY)
+                faces = face_classifier.detectMultiScale(gray, minNeighbors=2)
 
                 if len(faces) > 0:
                     (x, y, w, h) = faces[0]  # Consider the first detected face only

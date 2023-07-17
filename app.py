@@ -62,16 +62,31 @@ def get_camera_stream():
     js = """
     <script>
         const videoElement = document.createElement('video');
-        navigator.mediaDevices.getUserMedia({ video: true })
-        .then(function(stream) {
-            videoElement.srcObject = stream;
-        })
-        .catch(function(err) {
-            console.error(err);
-        });
-        videoElement.setAttribute('width', '100%');
-        videoElement.style.objectFit = 'cover';
-        document.getElementById('camera-container').appendChild(videoElement);
+
+    // Function to handle the user's response to camera permission request
+    function handleUserMedia(stream) {
+        videoElement.srcObject = stream;
+    }
+
+    // Function to handle errors when camera access is denied
+    function handleUserMediaError(error) {
+        console.error('Error accessing the camera:', error);
+    }
+
+    // Check if the browser supports the getUserMedia API
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        // Request camera access from the user
+        navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then(handleUserMedia) // User granted access, stream is available
+        .catch(handleUserMediaError); // User denied access or some other error occurred
+    } else {
+        console.error('getUserMedia API is not supported in this browser.');
+    }
+
+    videoElement.setAttribute('width', '100%');
+    videoElement.style.objectFit = 'cover';
+    document.getElementById('camera-container').appendChild(videoElement);
     </script>
     """
     return js

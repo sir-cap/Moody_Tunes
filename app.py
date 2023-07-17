@@ -63,8 +63,8 @@ def get_camera_image():
     return camera_image
 
 # Function to save the captured image on Cloudinary
-def save_image_on_cloudinary(image_path,filename):
-    response = cloudinary.uploader.upload(image_path, public_id=filename)
+def save_uploaded_image_on_cloudinary(image_bytes, filename):
+    response = cloudinary.uploader.upload(image_bytes, public_id=filename)
     return response['secure_url']
 
 # Adding the songs dataframe and the page link for Spotify playlist
@@ -213,39 +213,29 @@ def main():
             countdown_start = True
             countdown_end_time = time.time() + countdown_time
 
-            # Request camera access from the user
-            cap = cv2.VideoCapture(0)
-
-            try:
-                # Initialize the camera
-                cap = cv2.VideoCapture(0)
-            except Exception as e:
-                st.error(f"Failed to access camera: {e}")
-
-        if countdown_start:
-            progress_bar = st.progress(0)
-            while countdown_start and time.time() < countdown_end_time:
-                countdown_remaining = countdown_end_time - time.time()
-                progress = int(((countdown_time - countdown_remaining) / countdown_time) * 100)
-                progress_bar.progress(progress)
-                time.sleep(0.1)  # Add a small delay to avoid the continuous loop
-
             if countdown_start and time.time() >= countdown_end_time:
                 countdown_start = False  # Reset the countdown
                 progress_bar.empty()  # Remove the progress bar
 
                 loading.empty()  # Clear the loading message
 
-        if cap is not None:
-            # Capture mood from the camera
-            ret, frame = cap.read()
-            cap.release()
+                # Save the uploaded image to Cloudinary
+                if camera_image is not None:
+                    image_bytes = camera_image.read()
+                    timestamp = time.strftime("%Y%m%d-%H%M%S")
+                    picture_filename = f"mood_capture_{timestamp}.jpg"
+                    cloudinary_url = save_uploaded_image_on_cloudinary(image_bytes, picture_filename)
 
-            if ret:
-                cap.release()
-                labels = []
-                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                faces = face_classifier.detectMultiScale(gray, minNeighbors=2)
+                    # Display the uploaded image
+                    image_np_array = np.frombuffer(image_bytes, np.uint8)
+                    frame = cv2.imdecode(image_np_array, cv2.IMREAD_COLOR)
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    captured_image.image(frame_rgb, use_column_width=True)
+
+                    # Perform mood detection and song recommendation based on the uploaded image
+                    labels = []
+                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    faces = face_classifier.detectMultiScale(gray, minNeighbors=2)
 
                 if len(faces) > 0:
                     (x, y, w, h) = faces[0]  # Consider the first detected face only
@@ -280,7 +270,8 @@ def main():
                             cloudinary_url = save_image_on_cloudinary(picture_path, picture_filename)
 
                             # Display the captured image
-                            captured_image.image(frame_rgb, use_column_width=True)
+                            st.image(cloudinary_url, use_column_width=True)
+
 
                             # Create a container for the recommended songs and subheader
                             st.subheader(f"For your {detected_emotion} mood, your tunes are:")

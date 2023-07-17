@@ -9,3 +9,6 @@ headless = true
 
 [runner]
 systemDependencies = ["libgl1-mesa-glx"]
+
+[browser]
+gatherUsageStats = false

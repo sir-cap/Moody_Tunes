@@ -214,11 +214,11 @@ def main():
             countdown_end_time = time.time() + countdown_time
 
             # Request camera access from the user
-            cap = cv2.VideoCapture()
+            cap = cv2.VideoCapture(0)
 
             try:
                 # Initialize the camera
-                cap = cv2.VideoCapture()
+                cap = cv2.VideoCapture(0)
             except Exception as e:
                 st.error(f"Failed to access camera: {e}")
 

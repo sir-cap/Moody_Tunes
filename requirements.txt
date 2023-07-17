@@ -1,5 +1,5 @@
 streamlit
-opencv-contrib-python
+opencv-python-headless
 numpy
 pandas
 spotipy

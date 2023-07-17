@@ -260,7 +260,7 @@ def main():
 
                         if detected_emotion is not None:
                             st.success('Great job! :thumbsup:')
-                            st.image(cloudinary_url, use_column_width=True)
+                            st.image(frame_rgb, caption=f"Detected Emotion: {detected_emotion}", use_column_width=True)
 
                             # Create a container for the recommended songs and subheader
                             st.subheader(f"For your {detected_emotion} mood, your tunes are:")
@@ -270,8 +270,6 @@ def main():
                                 st.dataframe(recommended_songs[['Track', 'Artist']])
                                 create_spotify_playlist(recommended_songs, '1168069412', detected_emotion)
 
-                            # Remove the local image file
-                            os.remove(picture_path)
                     else:
                         detected_emotion = None
                         st.warning('Try again, folks! :pick:')

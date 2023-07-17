@@ -59,7 +59,7 @@ cloudinary.config(
 
 def get_camera_image():
     # Call the st.camera_input() function with the 'label' argument
-    camera_image = st.camera_input(label="Press the button 'let's capture your mood' to start")
+    camera_image = st.camera_input(disabled=False,label="Press the button 'let's capture your mood' to start")
     return camera_image
 
 # Function to save the captured image on Cloudinary
@@ -214,7 +214,8 @@ def main():
             countdown_end_time = time.time() + countdown_time
 
             # Request camera access from the user
-            cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+
+            cap = cv2.VideoCapture(0)
             try:
                 # Initialize the camera
                 cap = cv2.VideoCapture(0)

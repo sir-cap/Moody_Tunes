@@ -17,6 +17,7 @@ import cloudinary.api
 import base64
 import subprocess
 
+
 # Adding background & asking for camera permission
 page_bg = """
 <style>
@@ -61,38 +62,10 @@ def get_camera_image():
     camera_image = st.camera_input(label="Press the button 'let's capture your mood' to start")
     return camera_image
 
-def capture_image_with_emotion(emotion, timeframe):
-    if camera_image is not None:
-        # Save the captured image to Cloudinary
-        image_bytes = camera_image.read()
-        timestamp = time.strftime("%Y%m%d-%H%M%S")
-        picture_filename = f"{emotion}_{timeframe}_{timestamp}.jpg"
-        cloudinary_url = save_uploaded_image_on_cloudinary(image_bytes, picture_filename)
-
-        # Display the uploaded image
-        image_np_array = np.frombuffer(image_bytes, np.uint8)
-        frame = cv2.imdecode(image_np_array, cv2.IMREAD_COLOR)
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        st.image(frame_rgb, caption=f"Detected Emotion: {emotion}", use_column_width=True)
-
-captured_image = None
-
 # Function to save the captured image on Cloudinary
-def save_captured_image(image, emotion, timestamp):
-    # Save the captured image to Cloudinary with emotion and timestamp as the filename
-    picture_filename = f"{emotion}_{timestamp}.jpg"
-    image_bytes = cv2.imencode(".jpg", image)[1].tobytes()
-    cloudinary_url = save_uploaded_image_on_cloudinary(image_bytes, picture_filename)
-    return cloudinary_url
-
-
-def capture_image():
-    # Check if the camera input widget has already been created
-    if 'camera_image' not in st.session_state:
-        # Create the camera input widget if it hasn't been created
-        st.session_state.camera_image = st.camera_input(label="Press the button 'Let's capture your mood' to start")
-    
-    return st.session_state.camera_image
+def save_image_on_cloudinary(image_path,filename):
+    response = cloudinary.uploader.upload(image_path, public_id=filename)
+    return response['secure_url']
 
 # Adding the songs dataframe and the page link for Spotify playlist
 songs = pd.read_csv('cleaned_songs.csv')
@@ -181,7 +154,6 @@ def moody_tunes(folder_path, emotion, songs):
         else:
             st.write("Try again, folks!")
 
-#convers camera image to array
 
 # Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
 def main():
@@ -225,28 +197,59 @@ def main():
         st.title("MOODY TUNES")
         st.subheader(":headphones: Get song recommendations based on your face mood")
         st.divider()
-
+        
         # Get the camera image
-        camera_image = st.camera_input(label="Press the button 'Let's capture your mood' to start")
+        camera_image = get_camera_image()
 
         # Create a button to start the mood detection
         check_mood_button = st.button("Let's capture your mood", help="Click here to start")
         st.markdown('</div>', unsafe_allow_html=True)
+        cap = None  # Initialize the cap variable
+        captured_image = st.empty()
 
-        if camera_image is not None:
-            global detected_emotion  # Use the global variable
-            if check_mood_button:
-                # Convert the camera image to a NumPy array using PIL and OpenCV
-                camera_pil_image = Image.fromarray(camera_image.astype('uint8'), 'RGB')
-                camera_np_array = pil_to_np_array(camera_pil_image)
+        if check_mood_button:  # Corrected the variable name here
+            loading = st.empty()
+            loading.write("Capturing your mood...")
+            countdown_start = True
+            countdown_end_time = time.time() + countdown_time
 
-                # Perform mood detection and song recommendation based on the uploaded image
-                gray = cv2.cvtColor(camera_np_array, cv2.COLOR_BGR2GRAY)
+            # Request camera access from the user
+            cap = cv2.VideoCapture(0)
+
+            try:
+                # Initialize the camera
+                cap = cv2.VideoCapture(0)
+            except Exception as e:
+                st.error(f"Failed to access camera: {e}")
+
+        if countdown_start:
+            progress_bar = st.progress(0)
+            while countdown_start and time.time() < countdown_end_time:
+                countdown_remaining = countdown_end_time - time.time()
+                progress = int(((countdown_time - countdown_remaining) / countdown_time) * 100)
+                progress_bar.progress(progress)
+                time.sleep(0.1)  # Add a small delay to avoid the continuous loop
+
+            if countdown_start and time.time() >= countdown_end_time:
+                countdown_start = False  # Reset the countdown
+                progress_bar.empty()  # Remove the progress bar
+
+                loading.empty()  # Clear the loading message
+
+        if cap is not None:
+            # Capture mood from the camera
+            ret, frame = cap.read()
+            cap.release()
+
+            if ret:
+                cap.release()
+                labels = []
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 faces = face_classifier.detectMultiScale(gray, minNeighbors=2)
 
                 if len(faces) > 0:
                     (x, y, w, h) = faces[0]  # Consider the first detected face only
-                    cv2.rectangle(camera_np_array, (x, y), (x + w, y + h), (0, 255, 255), 2)
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
                     roi_gray = gray[y:y + h, x:x + w]
                     roi_gray = cv2.resize(roi_gray, (48, 48), interpolation=cv2.INTER_AREA)
 
@@ -258,34 +261,48 @@ def main():
                         prediction = classifier.predict(roi)[0]
                         label = emotion_labels[prediction.argmax()]
                         label_position = (x, y - 11)
-                        cv2.putText(camera_np_array, label, label_position, cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 2)
+                        cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 2)
 
                         detected_emotion = label  # Store the detected emotion
-                        frame_rgb = cv2.cvtColor(camera_np_array, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
+                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
 
                         if detected_emotion is not None:
                             st.success('Great job! :thumbsup:')
-                            st.image(frame_rgb, caption=f"Detected Emotion: {detected_emotion}", use_column_width=True)
-
-                            # Save the captured image to Cloudinary and display it
+                            # Save the captured image with emotion and timestamp
+                            picture_folder = "pictures"
+                            os.makedirs(picture_folder, exist_ok=True)
                             timestamp = time.strftime("%Y%m%d-%H%M%S")
-                            cloudinary_url = save_captured_image(camera_np_array, detected_emotion, timestamp)
-                            st.image(cloudinary_url, caption=f"Detected Emotion: {detected_emotion}", use_column_width=True)
+                            picture_filename = f"{detected_emotion}---{timestamp}.jpg"
+                            picture_path = os.path.join(picture_folder, picture_filename)
+                            cv2.imwrite(picture_path, frame)
 
-                            # Perform mood detection and song recommendation based on the uploaded image
-                            moody_tunes(detected_emotion, songs)
+                            # Save the image on Cloudinary
+                            cloudinary_url = save_image_on_cloudinary(picture_path, picture_filename)
 
-                        else:
-                            detected_emotion = None
-                            st.warning('Try again, folks! :pick:')
+                            # Display the captured image
+                            captured_image.image(frame_rgb, use_column_width=True)
+
+                            # Create a container for the recommended songs and subheader
+                            st.subheader(f"For your {detected_emotion} mood, your tunes are:")
+                            songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs dataframe
+                            recommended_songs = get_recommendations(detected_emotion, songs_df)
+                            if not recommended_songs.empty:
+                                st.dataframe(recommended_songs[['Track', 'Artist']])
+                                create_spotify_playlist(recommended_songs, '1168069412', detected_emotion)
+
+                            # Remove the local image file
+                            os.remove(picture_path)
+                    else:
+                        detected_emotion = None
+                        st.warning('Try again, folks! :pick:')
 
                 else:
                     detected_emotion = None
                     st.warning('Try again, folks! :pick:')
 
-    # Adding about page and the homepage image
+        # Adding about page and the homepage image 
     elif app_mode == "About Moody Tunes":
-        st.markdown(page_bg, unsafe_allow_html=True)
+        st.markdown(page_bg, unsafe_allow_html=True) 
         homepage_image_path = "homepage_image.png"
         homepage_image = open(homepage_image_path, "rb").read()
         homepage_image_encoded = base64.b64encode(homepage_image).decode()
@@ -326,7 +343,5 @@ def main():
         st.markdown("**Note:**")
         st.write("For the mood detection to work accurately, ensure that your face is well-illuminated and directly facing the camera.")
         st.warning("For more information, please reach out to diogo.capitao.576@gmail.com")
-
-
 if __name__ == "__main__":
     main()

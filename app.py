@@ -57,37 +57,32 @@ cloudinary.config(
     api_secret="phLxggqDlqsgWFpVwTwLk15Hw88"
 )
 
-#get access to camera
 def get_camera_stream():
-    js = """
-  <script>
-    function getCameraStream() {
-        const videoElement = document.createElement('video');
+    return """
+    <div id="camera-container">
+        <script>
+        function getCameraStream() {
+            const videoElement = document.createElement('video');
 
-        // Request camera access from the user
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function (stream) {
-                // If the user grants permission, attach the camera stream to the video element
-                videoElement.srcObject = stream;
-            })
-            .catch(function (err) {
-                // If the user denies permission or there's an error, handle it here
-                console.error(err);
-            });
+            // Request camera access from the user
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function (stream) {
+                    // If the user grants permission, attach the camera stream to the video element
+                    videoElement.srcObject = stream;
+                })
+                .catch(function (err) {
+                    // If the user denies permission or there's an error, handle it here
+                    console.error(err);
+                });
 
-        // Set video element attributes and append it to the 'camera-container' div
-        videoElement.setAttribute('width', '100%');
-        videoElement.style.objectFit = 'cover';
-        document.getElementById('camera-container').appendChild(videoElement);
-    }
-
-    // Call the function when the page is loaded
-    window.onload = function() {
-        getCameraStream();
-    };
-  </script>
-    """
-    return js
+            // Set video element attributes and append it to the 'camera-container' div
+            videoElement.setAttribute('width', '100%');
+            videoElement.style.objectFit = 'cover';
+            document.getElementById('camera-container').appendChild(videoElement);
+        }
+        </script>
+    </div>
+      """
 
 # Function to save the captured image on Cloudinary
 def save_image_on_cloudinary(image_path,filename):
@@ -221,29 +216,27 @@ def main():
             """,
             unsafe_allow_html=True,
         )
+
         st.title("MOODY TUNES")
         st.subheader(":headphones: Get song recommendations based on your face mood")
         st.divider()
-    
-        # Get the camera stream
-        st.markdown(get_camera_stream(), unsafe_allow_html=True)
-      
+
         start_mood_detection = st.button("Let's capture your mood", help="Click here to start")
         cap = None  # Initialize the cap variable
         captured_image = st.empty()
 
-        if start_mood_detection:  # Corrected the variable name here
+        if start_mood_detection:  
+            # Request camera access from the user
+            cap = cv2.VideoCapture(0)
             loading = st.empty()
             loading.write("Capturing your mood...")
             countdown_start = True
             countdown_end_time = time.time() + countdown_time
 
-            # Request camera access from the user
-            cap = cv2.VideoCapture(0)
-
             try:
                 # Initialize the camera
                 cap = cv2.VideoCapture(0)
+            
             except Exception as e:
                 st.error(f"Failed to access camera: {e}")
 
@@ -349,7 +342,7 @@ def main():
             f"""
             <div class="image-container">
                 <a href="#" onclick="window.location.reload(); return false;">
-                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="100" height="100">
+                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="80" height="80">
                 </a>
             </div>
             """,

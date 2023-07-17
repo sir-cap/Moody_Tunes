@@ -201,6 +201,9 @@ def main():
         # Get the camera image
         camera_image = get_camera_image()
 
+        # Print the camera image data (for debugging)
+        st.write("Camera Image Data:", camera_image)
+
         # Create a button to start the mood detection
         check_mood_button = st.button("Let's capture your mood", help="Click here to start")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -225,14 +228,11 @@ def main():
                     timestamp = time.strftime("%Y%m%d-%H%M%S")
                     picture_filename = f"mood_capture_{timestamp}.jpg"
 
+                    # Print the image data (for debugging)
+                    st.write("Image Bytes:", image_bytes)
+
                     # Save the image on Cloudinary
                     cloudinary_url = save_uploaded_image_on_cloudinary(image_bytes, picture_filename)
-
-                    # Display the uploaded image
-                    image_np_array = np.frombuffer(image_bytes, np.uint8)
-                    frame = cv2.imdecode(image_np_array, cv2.IMREAD_COLOR)
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    captured_image.image(frame_rgb, use_column_width=True)
 
                     # Perform mood detection and song recommendation based on the uploaded image
                     labels = []

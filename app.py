@@ -228,9 +228,9 @@ def main():
         # Get the camera stream
         st.markdown(get_camera_stream(), unsafe_allow_html=True)
       
+        start_mood_detection = st.button("Let's capture your mood", help="Click here to start")
         cap = None  # Initialize the cap variable
         captured_image = st.empty()
-        start_mood_detection = st.button("Let's capture your mood", help="Click here to start")
 
         if start_mood_detection:  # Corrected the variable name here
             loading = st.empty()

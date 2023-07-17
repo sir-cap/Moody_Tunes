@@ -57,32 +57,39 @@ cloudinary.config(
     api_secret="phLxggqDlqsgWFpVwTwLk15Hw88"
 )
 
+#get access to camera
 def get_camera_stream():
-    return """
-    <div id="camera-container">
-        <script>
-        function getCameraStream() {
-            const videoElement = document.createElement('video');
+    js = """
+    <script>
+        const videoElement = document.createElement('video');
 
-            // Request camera access from the user
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function (stream) {
-                    // If the user grants permission, attach the camera stream to the video element
-                    videoElement.srcObject = stream;
-                })
-                .catch(function (err) {
-                    // If the user denies permission or there's an error, handle it here
-                    console.error(err);
-                });
+    // Function to handle the user's response to camera permission request
+    function handleUserMedia(stream) {
+        videoElement.srcObject = stream;
+    }
 
-            // Set video element attributes and append it to the 'camera-container' div
-            videoElement.setAttribute('width', '100%');
-            videoElement.style.objectFit = 'cover';
-            document.getElementById('camera-container').appendChild(videoElement);
-        }
-        </script>
-    </div>
-      """
+    // Function to handle errors when camera access is denied
+    function handleUserMediaError(error) {
+        console.error('Error accessing the camera:', error);
+    }
+
+    // Check if the browser supports the getUserMedia API
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        // Request camera access from the user
+        navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then(handleUserMedia) // User granted access, stream is available
+        .catch(handleUserMediaError); // User denied access or some other error occurred
+    } else {
+        console.error('getUserMedia API is not supported in this browser.');
+    }
+
+    videoElement.setAttribute('width', '100%');
+    videoElement.style.objectFit = 'cover';
+    document.getElementById('camera-container').appendChild(videoElement);
+    </script>
+    """
+    return js
 
 # Function to save the captured image on Cloudinary
 def save_image_on_cloudinary(image_path,filename):
@@ -216,30 +223,31 @@ def main():
             """,
             unsafe_allow_html=True,
         )
-
         st.title("MOODY TUNES")
         st.subheader(":headphones: Get song recommendations based on your face mood")
         st.divider()
-        
-        # Add the camera stream using the get_camera_stream() function
+
+        # Get the camera stream
         st.markdown(get_camera_stream(), unsafe_allow_html=True)
 
-        start_mood_detection = st.button("Let's capture your mood", help="Click here to start")
+        # Create a button to start the mood detection
+        check_mood_button = st.button("Let's capture your mood", help="Click here to start")
+        st.markdown('</div>', unsafe_allow_html=True)
         cap = None  # Initialize the cap variable
         captured_image = st.empty()
 
-        if start_mood_detection:  
-            # Request camera access from the user
-            cap = cv2.VideoCapture(0)
+        if check_mood_button:  # Corrected the variable name here
             loading = st.empty()
             loading.write("Capturing your mood...")
             countdown_start = True
             countdown_end_time = time.time() + countdown_time
 
+            # Request camera access from the user
+            cap = cv2.VideoCapture(0)
+
             try:
                 # Initialize the camera
                 cap = cv2.VideoCapture(0)
-            
             except Exception as e:
                 st.error(f"Failed to access camera: {e}")
 
@@ -345,7 +353,7 @@ def main():
             f"""
             <div class="image-container">
                 <a href="#" onclick="window.location.reload(); return false;">
-                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="80" height="80">
+                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="100" height="100">
                 </a>
             </div>
             """,

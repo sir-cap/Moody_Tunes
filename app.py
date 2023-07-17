@@ -214,7 +214,7 @@ def main():
             countdown_end_time = time.time() + countdown_time
 
             # Request camera access from the user
-            cap = cv2.VideoCapture(0, cv2.CAP_V4L)
+            cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
             try:
                 # Initialize the camera
                 cap = cv2.VideoCapture(0)

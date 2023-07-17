@@ -224,7 +224,11 @@ def main():
                     image_bytes = camera_image.read()
                     timestamp = time.strftime("%Y%m%d-%H%M%S")
                     picture_filename = f"mood_capture_{timestamp}.jpg"
-                    cloudinary_url = save_uploaded_image_on_cloudinary(image_bytes, picture_filename)
+                    picture_path = os.path.join("pictures", picture_filename)  # Save the image locally temporarily
+                    with open(picture_path, "wb") as f:
+                        f.write(image_bytes)
+
+                    cloudinary_url = save_image_on_cloudinary(picture_path, picture_filename)
 
                     # Display the uploaded image
                     image_np_array = np.frombuffer(image_bytes, np.uint8)

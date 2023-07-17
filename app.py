@@ -224,11 +224,9 @@ def main():
                     image_bytes = camera_image.read()
                     timestamp = time.strftime("%Y%m%d-%H%M%S")
                     picture_filename = f"mood_capture_{timestamp}.jpg"
-                    picture_path = os.path.join("pictures", picture_filename)  # Save the image locally temporarily
-                    with open(picture_path, "wb") as f:
-                        f.write(image_bytes)
 
-                    cloudinary_url = save_image_on_cloudinary(picture_path, picture_filename)
+                    # Save the image on Cloudinary
+                    cloudinary_url = save_uploaded_image_on_cloudinary(image_bytes, picture_filename)
 
                     # Display the uploaded image
                     image_np_array = np.frombuffer(image_bytes, np.uint8)
@@ -262,20 +260,7 @@ def main():
 
                         if detected_emotion is not None:
                             st.success('Great job! :thumbsup:')
-                            # Save the captured image with emotion and timestamp
-                            picture_folder = "pictures"
-                            os.makedirs(picture_folder, exist_ok=True)
-                            timestamp = time.strftime("%Y%m%d-%H%M%S")
-                            picture_filename = f"{detected_emotion}---{timestamp}.jpg"
-                            picture_path = os.path.join(picture_folder, picture_filename)
-                            cv2.imwrite(picture_path, frame)
-
-                            # Save the image on Cloudinary
-                            cloudinary_url = save_image_on_cloudinary(picture_path, picture_filename)
-
-                            # Display the captured image
                             st.image(cloudinary_url, use_column_width=True)
-
 
                             # Create a container for the recommended songs and subheader
                             st.subheader(f"For your {detected_emotion} mood, your tunes are:")

@@ -220,6 +220,9 @@ def main():
         st.title("MOODY TUNES")
         st.subheader(":headphones: Get song recommendations based on your face mood")
         st.divider()
+        
+        # Add the camera stream using the get_camera_stream() function
+        st.markdown(get_camera_stream(), unsafe_allow_html=True)
 
         start_mood_detection = st.button("Let's capture your mood", help="Click here to start")
         cap = None  # Initialize the cap variable

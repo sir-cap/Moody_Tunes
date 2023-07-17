@@ -371,6 +371,6 @@ def main():
         st.divider()
         st.markdown("**Note:**")
         st.write("For the mood detection to work accurately, ensure that your face is well-illuminated and directly facing the camera.")
-        st.warning("For more information, please reach out to us [here](mailto:diogo.capitao.576@gmail.com)")
+        st.warning("For more information, please reach out to diogo.capitao.576@gmail.com")
 if __name__ == "__main__":
     main()

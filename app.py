@@ -60,34 +60,28 @@ cloudinary.config(
 #get access to camera
 def get_camera_stream():
     js = """
-    <script>
+  <script>
+    function getCameraStream() {
         const videoElement = document.createElement('video');
 
-    // Function to handle the user's response to camera permission request
-    function handleUserMedia(stream) {
-        videoElement.srcObject = stream;
-    }
-
-    // Function to handle errors when camera access is denied
-    function handleUserMediaError(error) {
-        console.error('Error accessing the camera:', error);
-    }
-
-    // Check if the browser supports the getUserMedia API
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         // Request camera access from the user
-        navigator.mediaDevices
-        .getUserMedia({ video: true })
-        .then(handleUserMedia) // User granted access, stream is available
-        .catch(handleUserMediaError); // User denied access or some other error occurred
-    } else {
-        console.error('getUserMedia API is not supported in this browser.');
-    }
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function (stream) {
+                // If the user grants permission, attach the camera stream to the video element
+                videoElement.srcObject = stream;
+            })
+            .catch(function (err) {
+                // If the user denies permission or there's an error, handle it here
+                console.error(err);
+            });
 
-    videoElement.setAttribute('width', '100%');
-    videoElement.style.objectFit = 'cover';
-    document.getElementById('camera-container').appendChild(videoElement);
-    </script>
+        // Set video element attributes and append it to the 'camera-container' div
+        videoElement.setAttribute('width', '100%');
+        videoElement.style.objectFit = 'cover';
+        document.getElementById('camera-container').appendChild(videoElement);
+    }
+    getCameraStream();
+</script>
     """
     return js
 
@@ -226,17 +220,16 @@ def main():
         st.title("MOODY TUNES")
         st.subheader(":headphones: Get song recommendations based on your face mood")
         st.divider()
+          # Create a button to start the mood detection
+        start_mood_detection = st.button("Let's capture your mood", help="Click here to start")
 
         # Get the camera stream
         st.markdown(get_camera_stream(), unsafe_allow_html=True)
-
-        # Create a button to start the mood detection
-        check_mood_button = st.button("Let's capture your mood", help="Click here to start")
-        st.markdown('</div>', unsafe_allow_html=True)
+      
         cap = None  # Initialize the cap variable
         captured_image = st.empty()
 
-        if check_mood_button:  # Corrected the variable name here
+        if start_mood_detection:  # Corrected the variable name here
             loading = st.empty()
             loading.write("Capturing your mood...")
             countdown_start = True

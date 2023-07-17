@@ -71,6 +71,7 @@ def capture_image():
     # Call the st.camera_input() function with the 'label' argument
     camera_image = st.camera_input(label="Press the button 'Let's capture your mood' to start")
     return camera_image
+    
 
 # Adding the songs dataframe and the page link for Spotify playlist
 songs = pd.read_csv('cleaned_songs.csv')
@@ -215,9 +216,18 @@ def main():
         cap = None  # Initialize the cap variable
         captured_image = st.empty()
 
+        # Create a button to start the mood detection
+        check_mood_button = st.button("Let's capture your mood", help="Click here to start")
+        st.markdown('</div>', unsafe_allow_html=True)
+        cap = None  # Initialize the cap variable
+        captured_image = st.empty()
+
         if check_mood_button:
             captured_frame = np.array(camera_image)
             if captured_frame is not None:
+                # Convert the image data type to uint8
+                captured_frame = captured_frame.astype(np.uint8)
+
                 # Save the captured image to Cloudinary
                 image_bytes = cv2.imencode(".jpg", captured_frame)[1].tobytes()
                 timestamp = time.strftime("%Y%m%d-%H%M%S")

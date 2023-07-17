@@ -67,6 +67,22 @@ def save_uploaded_image_on_cloudinary(image_bytes, filename):
     response = cloudinary.uploader.upload(image_bytes, public_id=filename)
     return response['secure_url']
 
+def capture_image():
+    cap = cv2.VideoCapture(0)
+
+    if not cap.isOpened():
+        print("Error: Unable to access the camera.")
+        return None
+
+    ret, frame = cap.read()
+    cap.release()
+
+    if ret:
+        return frame
+    else:
+        print("Error: Unable to capture the image from the camera.")
+        return None
+
 # Adding the songs dataframe and the page link for Spotify playlist
 songs = pd.read_csv('cleaned_songs.csv')
 os.environ["http://localhost:8501/callback"] = "http://localhost:8502/callback"
@@ -210,34 +226,23 @@ def main():
         cap = None  # Initialize the cap variable
         captured_image = st.empty()
 
-        if check_mood_button:  # Corrected the variable name here
-            loading = st.empty()
-            loading.write("Capturing your mood...")
-            countdown_start = True
-            countdown_end_time = time.time() + countdown_time
+    if check_mood_button:
+        captured_frame = capture_image()
 
-            if countdown_start and time.time() >= countdown_end_time:
-                countdown_start = False  # Reset the countdown
-                progress_bar.empty()  # Remove the progress bar
+        if captured_frame is not None:
+            # Save the captured image to Cloudinary
+            image_bytes = cv2.imencode(".jpg", captured_frame)[1].tobytes()
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            picture_filename = f"mood_capture_{timestamp}.jpg"
+            cloudinary_url = save_uploaded_image_on_cloudinary(image_bytes, picture_filename)
 
-                loading.empty()  # Clear the loading message
+            # Display the captured image
+            captured_image.image(captured_frame, channels="BGR", use_column_width=True)
 
-                # Save the uploaded image to Cloudinary
-                if camera_image is not None:
-                    image_bytes = camera_image.read()
-                    timestamp = time.strftime("%Y%m%d-%H%M%S")
-                    picture_filename = f"mood_capture_{timestamp}.jpg"
-
-                    # Print the image data (for debugging)
-                    st.write("Image Bytes:", image_bytes)
-
-                    # Save the image on Cloudinary
-                    cloudinary_url = save_uploaded_image_on_cloudinary(image_bytes, picture_filename)
-
-                    # Perform mood detection and song recommendation based on the uploaded image
-                    labels = []
-                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    faces = face_classifier.detectMultiScale(gray, minNeighbors=2)
+            # Perform mood detection and song recommendation based on the uploaded image
+            labels = []
+            gray = cv2.cvtColor(captured_frame, cv2.COLOR_BGR2GRAY)
+            faces = face_classifier.detectMultiScale(gray, minNeighbors=2)
 
                 if len(faces) > 0:
                     (x, y, w, h) = faces[0]  # Consider the first detected face only

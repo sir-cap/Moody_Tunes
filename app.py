@@ -68,14 +68,16 @@ def save_image_on_cloudinary(image_data, filename):
     return response['secure_url']
 
 def detect_emotion(cv_image):
-    global detected_emotion
+    # Define the variable detected_emotion before the if block
+    detected_emotion = None
 
     gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
     faces = face_classifier.detectMultiScale(gray, minNeighbors=2)
 
     if len(faces) > 0:
         (x, y, w, h) = faces[0]  # Consider the first detected face only
-        cv2.rectangle(cv_image, (x, y), (x + w, y + h), (0, 255, 255), 2)
+        cv_image_with_label = cv_image.copy()  # Create a copy of the original image
+        cv2.rectangle(cv_image_with_label, (x, y), (x + w, y + h), (255, 0, 0), 5)
         roi_gray = gray[y:y + h, x:x + w]
         roi_gray = cv2.resize(roi_gray, (48, 48), interpolation=cv2.INTER_AREA)
 
@@ -86,9 +88,27 @@ def detect_emotion(cv_image):
 
             prediction = classifier.predict(roi)[0]
             label = emotion_labels[prediction.argmax()]
-            detected_emotion = label  # Store the detected emotion
+            label_position = (x, y - 11)
+            cv2.putText(cv_image_with_label, label, label_position, cv2.FONT_HERSHEY_DUPLEX, 3, (0, 255, 255), 3)
 
-    return cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB and return
+            # Assign the detected_emotion inside the if block
+            detected_emotion = label
+        else:
+            detected_emotion = None
+
+        # Convert the modified image to RGB before returning
+        rgb_image = cv2.cvtColor(cv_image_with_label, cv2.COLOR_BGR2RGB)
+        
+
+        # Return the detected emotion and the modified image
+        return detected_emotion, rgb_image
+
+    else:
+        # Convert the original image to RGB before returning
+        rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
+
+        # Return the detected emotion and the original image (since no face detected)
+        return detected_emotion, rgb_image
 
 # Adding the songs dataframe and the page link for Spotify playlist
 songs = pd.read_csv('cleaned_songs.csv')
@@ -203,7 +223,7 @@ def main():
                     countdown_time = 3  # Set the countdown time in seconds
                     countdown_start = True  # Flag to indicate if countdown has started
                     countdown_end_time = time.time() + countdown_time
-                    cv_image = detect_emotion(cv_image)
+                    detected_emotion, rgb_image = detect_emotion(cv_image) 
 
                 if detected_emotion is not None:
                     st.success('Great job! :thumbsup:')
@@ -213,7 +233,7 @@ def main():
                     cloudinary_url = save_image_on_cloudinary(cv_image, picture_filename)
 
                     # Display the uploaded and processed image
-                    st.image(cv_image, caption=f"(Emotion: {detected_emotion})", use_column_width=True)
+                    st.image(rgb_image, caption=f"(Emotion: {detected_emotion})", use_column_width=True)
 
                     # Create a container for the recommended songs and subheader
                     st.subheader(f"For your {detected_emotion} mood, your tunes are:")

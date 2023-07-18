@@ -122,11 +122,8 @@ def get_recommendations(emotion, songs):
 def create_spotify_playlist(recommended_songs, username, emotion):
     # Create a new playlist
     playlist_name = f"MoodyTunes for a {emotion} day - {time.strftime('%d/%m/%Y')}"
-    client_id = "e5557a3edfe0413f9babf4fefe546e02"
-    client_secret = "aa8ebb963acc4ffbb79ae4ed396d61ec"
-    redirect_uri = os.environ.get("https://moodytunes.streamlit.app/callback")
-    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope="playlist-modify-public", client_id=client_id,
-                                                   client_secret=client_secret, redirect_uri=redirect_uri))
+    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope="playlist-modify-public", client_id="e5557a3edfe0413f9babf4fefe546e02",
+                                                   client_secret="aa8ebb963acc4ffbb79ae4ed396d61ec", redirect_uri="https://moodytunes.streamlit.app/callback"))
 
     playlist = sp.user_playlist_create(user=username, name=playlist_name, public=True)
     playlist_id = playlist['id']

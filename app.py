@@ -16,6 +16,8 @@ import cloudinary.uploader
 import cloudinary.api
 import base64
 import subprocess
+from io import BytesIO
+
 
 
 # Adding background & asking for camera permission
@@ -63,13 +65,18 @@ def get_camera_image():
     return camera_image
 
 # Function to save the captured image on Cloudinary
-def save_image_on_cloudinary(image_path,filename):
-    response = cloudinary.uploader.upload(image_path, public_id=filename)
+def save_image_on_cloudinary(image_data, filename):
+    # Convert the image data to bytes and create an in-memory file
+    image_bytes = BytesIO()
+    Image.fromarray(image_data).save(image_bytes, format='JPEG')
+    image_bytes.seek(0)
+
+    response = cloudinary.uploader.upload(image_bytes, public_id=filename)
     return response['secure_url']
 
 # Adding the songs dataframe and the page link for Spotify playlist
 songs = pd.read_csv('cleaned_songs.csv')
-os.environ["http://localhost:8501/callback"] = "http://localhost:8502/callback"
+os.environ["http://localhost:8501/callback"] = "https://moodytunes.streamlit.app/callback"
 
 # Path for the model
 face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -125,39 +132,9 @@ def get_recommendations(emotion, songs):
     else:
         return pd.DataFrame()
 
-# Function to detect the emotions, save the image and get the name of the emotion
-def moody_tunes(folder_path, emotion, songs):
-    # Get the list of files in the folder
-    files = os.listdir(folder_path)
-
-    # Sorting the files by their modified time in descending order
-    sorted_files = sorted(files, key=lambda x: os.path.getmtime(os.path.join(folder_path, x)), reverse=True)
-
-    if sorted_files:
-        last_file = sorted_files[0]
-        # Extract the emotion from the last added file name
-        match = re.search(r'^(.*?)---', last_file)
-        if match:
-            detected_emotion = match.group(1).lower()
-
-            # Filter songs by mood/emotion
-            emotion_songs = songs[songs['Mood'].str.lower() == detected_emotion.lower()]
-
-            if not emotion_songs.empty:
-                # Randomly select 7 songs
-                recommended_songs = emotion_songs.sample(n=7)
-                st.markdown('<div style="display: flex; justify-content: center;">', unsafe_allow_html=True)
-                st.dataframe(recommended_songs[['Track', 'Artist']])
-
-                create_spotify_playlist(recommended_songs, '1168069412', detected_emotion)
-
-        else:
-            st.write("Try again, folks!")
-
-
 # Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
 def main():
-    global countdown_start, countdown_end_time  # Mark variables as global
+    global countdown_start, countdown_end_time, detected_emotion  # Mark variables as global
     st.sidebar.title("Navigation")
 
     app_mode = st.sidebar.selectbox("Choose a page", ["Home", "About Moody Tunes"])
@@ -266,32 +243,24 @@ def main():
                         detected_emotion = label  # Store the detected emotion
                         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
 
-                        if detected_emotion is not None:
-                            st.success('Great job! :thumbsup:')
-                            # Save the captured image with emotion and timestamp
-                            picture_folder = "pictures"
-                            os.makedirs(picture_folder, exist_ok=True)
-                            timestamp = time.strftime("%Y%m%d-%H%M%S")
-                            picture_filename = f"{detected_emotion}---{timestamp}.jpg"
-                            picture_path = os.path.join(picture_folder, picture_filename)
-                            cv2.imwrite(picture_path, frame)
+                    if detected_emotion is not None:
+                        st.success('Great job! :thumbsup:')
+                        # Save the image on Cloudinary
+                        timestamp = time.strftime("%Y%m%d-%H%M%S")
+                        picture_filename = f"{detected_emotion}---{timestamp}.jpg"
+                        cloudinary_url = save_image_on_cloudinary(frame_rgb, picture_filename)
 
-                            # Save the image on Cloudinary
-                            cloudinary_url = save_image_on_cloudinary(picture_path, picture_filename)
+                        # Display the captured image
+                        captured_image.image(frame_rgb, use_column_width=True)
 
-                            # Display the captured image
-                            captured_image.image(frame_rgb, use_column_width=True)
+                        # Create a container for the recommended songs and subheader
+                        st.subheader(f"For your {detected_emotion} mood, your tunes are:")
+                        songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs dataframe
+                        recommended_songs = get_recommendations(detected_emotion, songs_df)
+                        if not recommended_songs.empty:
+                            st.dataframe(recommended_songs[['Track', 'Artist']])
+                            create_spotify_playlist(recommended_songs, '1168069412', detected_emotion)
 
-                            # Create a container for the recommended songs and subheader
-                            st.subheader(f"For your {detected_emotion} mood, your tunes are:")
-                            songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs dataframe
-                            recommended_songs = get_recommendations(detected_emotion, songs_df)
-                            if not recommended_songs.empty:
-                                st.dataframe(recommended_songs[['Track', 'Artist']])
-                                create_spotify_playlist(recommended_songs, '1168069412', detected_emotion)
-
-                            # Remove the local image file
-                            os.remove(picture_path)
                     else:
                         detected_emotion = None
                         st.warning('Try again, folks! :pick:')

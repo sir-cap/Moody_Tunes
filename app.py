@@ -188,90 +188,9 @@ def main():
         st.subheader(":headphones: Get song recommendations based on your face mood")
         st.divider()
 
-        capture_button = st.button("Capture your mood", help="Click here to be captured")
-        st.subheader("Or upload your mood, choose a picture...")
-        uploaded_file = st.file_uploader("",type=["jpg", "png", "jpeg"])
+        uploaded_file = st.file_uploader("",type=["jpg", "png", "jpeg"],label_visibility="visible")
 
         detected_emotion = None  # Reset detected emotion to None
-
-        if capture_button:
-            # Capture mood from the camera
-            cap = None  # Initialize the cap variable
-
-            with st.spinner("Capturing your mood..."):
-                countdown_time = 3  # Set the countdown time in seconds
-                countdown_start = True  # Flag to indicate if countdown has started
-                countdown_end_time = time.time() + countdown_time
-
-                cap = cv2.VideoCapture(0)
-                try:
-                    # Initialize the camera
-                    cap = cv2.VideoCapture(0)
-                except Exception as e:
-                    st.error(f"Failed to access camera: {e}")
-
-                if countdown_start:
-                    progress_bar = st.progress(0)
-                    while countdown_start and time.time() < countdown_end_time:
-                        countdown_remaining = countdown_end_time - time.time()
-                        progress = int(((countdown_time - countdown_remaining) / countdown_time) * 100)
-                        progress_bar.progress(progress)
-                        time.sleep(0.1)  # Add a small delay to avoid the continuous loop
-
-                    if countdown_start and time.time() >= countdown_end_time:
-                        countdown_start = False  # Reset the countdown
-                        progress_bar.empty()  # Remove the progress bar
-
-            if cap is not None:
-                # Capture mood from the camera
-                ret, frame = cap.read()
-                cap.release()
-
-                if ret:
-                    cap.release()
-                    labels = []
-                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    faces = face_classifier.detectMultiScale(gray, minNeighbors=2)
-
-                    if len(faces) > 0:
-                        (x, y, w, h) = faces[0]  # Consider the first detected face only
-                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
-                        roi_gray = gray[y:y + h, x:x + w]
-                        roi_gray = cv2.resize(roi_gray, (48, 48), interpolation=cv2.INTER_AREA)
-
-                        if np.sum([roi_gray]) != 0:
-                            roi = roi_gray.astype('float') / 255.0
-                            roi = img_to_array(roi)
-                            roi = np.expand_dims(roi, axis=0)
-
-                            prediction = classifier.predict(roi)[0]
-                            label = emotion_labels[prediction.argmax()]
-                            detected_emotion = label  # Store the detected emotion
-                            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
-
-                    if detected_emotion is not None:
-                        st.success('Great job! :thumbsup:')
-                        # Save the image on Cloudinary
-                        timestamp = time.strftime("%Y%m%d-%H%M%S")
-                        picture_filename = f"{detected_emotion}---{timestamp}.jpg"
-                        cloudinary_url = save_image_on_cloudinary(frame_rgb, picture_filename)
-
-                        # Display the captured image
-                        st.image(frame_rgb, use_column_width=True)
-
-                        # Create a container for the recommended songs and subheader
-                        st.subheader(f"For your {detected_emotion} mood, your tunes are:")
-                        songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs dataframe
-                        recommended_songs = get_recommendations(detected_emotion, songs_df)
-                        if not recommended_songs.empty:
-                            st.dataframe(recommended_songs[['Track', 'Artist']])
-                            create_spotify_playlist(recommended_songs, '1168069412', detected_emotion)
-                    else:
-                        detected_emotion = None
-                        st.warning('No face detected. Try again! :pick:')
-                else:
-                    detected_emotion = None
-                    st.warning('Unable to access the camera. Please try again.')
 
         if uploaded_file is not None:
             # Convert the uploaded file to an OpenCV image
@@ -294,7 +213,7 @@ def main():
                     cloudinary_url = save_image_on_cloudinary(cv_image, picture_filename)
 
                     # Display the uploaded and processed image
-                    st.image(cv_image, use_column_width=True)
+                    st.image(cv_image, caption=f"(Emotion: {detected_emotion})", use_column_width=True)
 
                     # Create a container for the recommended songs and subheader
                     st.subheader(f"For your {detected_emotion} mood, your tunes are:")
@@ -344,11 +263,10 @@ def main():
         st.write("Moody Tunes is a user interface that recognizes your mood using your facial expression and gives the user music suggestions from the same mood")
         st.divider()
         st.markdown("**How it works:**")
-        st.write("1. Click on the 'Let's capture your mood' button to start the mood detection.")
-        st.write("2. The application will access your device's camera and capture a frame.")
-        st.write("3. It will detect your facial expression and display it on the screen.")
+        st.write("1. Drag and drop or click in 'Browse files' to upload your picture to start the mood detection.")
+        st.write("2. The application will detect your facial expression and display it on the screen.")
         st.write("4. Based on your expression, the application will recommend songs that match your mood.")
-        st.write("5. You can listen to the recommended songs on Spotify.")
+        st.write("5. You can listen to the recommended songs on Spotify directly using the link presented.")
         st.divider()
         st.markdown("**Note:**")
         st.write("For the mood detection to work accurately, ensure that your face is well-illuminated and directly facing the camera.")

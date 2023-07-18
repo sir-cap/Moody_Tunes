@@ -230,7 +230,7 @@ def main():
                     # Save the image on Cloudinary
                     timestamp = time.strftime("%Y%m%d-%H%M%S")
                     picture_filename = f"{detected_emotion}---{timestamp}.jpg"
-                    cloudinary_url = save_image_on_cloudinary(cv_image, picture_filename)
+                    cloudinary_url = save_image_on_cloudinary(rgb_image, picture_filename)
 
                     # Display the uploaded and processed image
                     st.image(rgb_image, use_column_width=True)

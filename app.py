@@ -77,7 +77,7 @@ def detect_emotion(cv_image):
     if len(faces) > 0:
         (x, y, w, h) = faces[0]  # Consider the first detected face only
         cv_image_with_label = cv_image.copy()  # Create a copy of the original image
-        cv2.rectangle(cv_image_with_label, (x, y), (x + w, y + h), (255, 0, 0), 5)
+        cv2.rectangle(cv_image_with_label, (x, y), (x + w, y + h), (255, 0, 0), 3)
         roi_gray = gray[y:y + h, x:x + w]
         roi_gray = cv2.resize(roi_gray, (48, 48), interpolation=cv2.INTER_AREA)
 
@@ -89,7 +89,7 @@ def detect_emotion(cv_image):
             prediction = classifier.predict(roi)[0]
             label = emotion_labels[prediction.argmax()]
             label_position = (x, y - 11)
-            cv2.putText(cv_image_with_label, label, label_position, cv2.FONT_HERSHEY_DUPLEX, 3, (0, 255, 255), 3)
+            cv2.putText(cv_image_with_label, label, label_position, cv2.FONT_HERSHEY_DUPLEX, 2, (0, 255, 255), 2)
 
             # Assign the detected_emotion inside the if block
             detected_emotion = label

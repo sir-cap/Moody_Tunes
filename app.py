@@ -233,7 +233,7 @@ def main():
                     cloudinary_url = save_image_on_cloudinary(cv_image, picture_filename)
 
                     # Display the uploaded and processed image
-                    st.image(rgb_image, caption=f"(Emotion: {detected_emotion})", use_column_width=True)
+                    st.image(rgb_image, use_column_width=True)
 
                     # Create a container for the recommended songs and subheader
                     st.subheader(f"For your {detected_emotion} mood, your tunes are:")

@@ -1,3 +1,4 @@
+#importing libraries
 import streamlit as st
 import cv2
 import numpy as np
@@ -18,28 +19,12 @@ import base64
 import subprocess
 from io import BytesIO
 
-# Adding background & asking for camera permission
+# Adding background
 page_bg = """
 <style>
 [data-testid="stAppViewContainer"] {
     background: rgb(2, 0, 36);
     background: radial-gradient(circle, rgba(2, 0, 36, 1) 0%, rgba(8, 8, 109, 1) 60%, rgba(0, 84, 255, 1) 80%);
-}
-
-#camera-container {
-    position: relative;
-    width: 100%;
-    height: 0;
-    padding-bottom: 56.25%;
-}
-
-#camera-container video {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
 }
 </style>
 """
@@ -67,6 +52,7 @@ def save_image_on_cloudinary(image_data, filename):
     response = cloudinary.uploader.upload(image_bytes, public_id=filename)
     return response['secure_url']
 
+# Function to treat the captured image and return of image with emotion
 def detect_emotion(cv_image):
     # Define the variable detected_emotion before the if block
     detected_emotion = None
@@ -99,7 +85,6 @@ def detect_emotion(cv_image):
         # Convert the modified image to RGB before returning
         rgb_image = cv2.cvtColor(cv_image_with_label, cv2.COLOR_BGR2RGB)
         
-
         # Return the detected emotion and the modified image
         return detected_emotion, rgb_image
 
@@ -179,7 +164,8 @@ def main():
         homepage_image_path = "homepage_image.png"
         homepage_image = open(homepage_image_path, "rb").read()
         homepage_image_encoded = base64.b64encode(homepage_image).decode()
-        homepage_url = "http://localhost:8501"
+        homepage_url = "https://moodytunes.streamlit.app/"
+
 
         st.markdown(
             """
@@ -255,7 +241,7 @@ def main():
         homepage_image_path = "homepage_image.png"
         homepage_image = open(homepage_image_path, "rb").read()
         homepage_image_encoded = base64.b64encode(homepage_image).decode()
-        homepage_url = "http://localhost:8501"
+        homepage_url = "https://moodytunes.streamlit.app/"
         st.markdown(
             """
             <style>

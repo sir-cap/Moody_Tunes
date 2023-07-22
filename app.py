@@ -18,6 +18,8 @@ import cloudinary.api
 import base64
 import subprocess
 from io import BytesIO
+import webbrowser
+from config import SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIFY_USER_ID, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
 
 # Adding background
 page_bg = """
@@ -37,9 +39,9 @@ textColor = "#c9c9c9"
 
 # Initialize Cloudinary configuration
 cloudinary.config(
-    cloud_name="dpylcpsoo",
-    api_key="874926159578349",
-    api_secret="phLxggqDlqsgWFpVwTwLk15Hw88"
+    cloud_name=CLOUDINARY_CLOUD_NAME,
+    api_key=CLOUDINARY_API_KEY,
+    api_secret=CLOUDINARY_API_SECRET
 )
 
 # Function to save the captured image on Cloudinary
@@ -127,8 +129,9 @@ def get_recommendations(emotion, songs):
 def create_spotify_playlist(recommended_songs, username, emotion):
     # Create a new playlist
     playlist_name = f"MoodyTunes for a {emotion} day - {time.strftime('%d/%m/%Y')}"
-    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope="playlist-modify-public", client_id="e5557a3edfe0413f9babf4fefe546e02",
-                                                   client_secret="aa8ebb963acc4ffbb79ae4ed396d61ec", redirect_uri="https://moodytunes.streamlit.app/callback"))
+    sp = spotipy.Spotify(auth_manager=spotipy.oauth2.SpotifyOAuth(scope="playlist-modify-public", client_id=SPOTIPY_CLIENT_ID,
+                                                             client_secret=SPOTIPY_CLIENT_SECRET,redirect_uri="https://moodytunes.streamlit.app/callback"))
+
 
     playlist = sp.user_playlist_create(user=username, name=playlist_name, public=True)
     playlist_id = playlist['id']
@@ -148,7 +151,9 @@ def create_spotify_playlist(recommended_songs, username, emotion):
 
     # Add info if it's successful
     playlist_url = playlist['external_urls']['spotify']
-    st.subheader(f"Listen to your Moody Tunes on [Spotify]({playlist_url})")
+    st.warning(f"You'll be redirect to your MoodyTunes on [Spotify]({playlist_url})")
+    webbrowser.open_new_tab(playlist_url)
+
 
 # Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
 def main():
@@ -227,7 +232,7 @@ def main():
                     recommended_songs = get_recommendations(detected_emotion, songs_df)
                     if not recommended_songs.empty:
                         st.dataframe(recommended_songs[['Track', 'Artist']])
-                        create_spotify_playlist(recommended_songs, '1168069412', detected_emotion)
+                        create_spotify_playlist(recommended_songs, SPOTIFY_USER_ID , detected_emotion)
                 else:
                     detected_emotion = None
                     st.warning('No face detected in the uploaded image. Try again! :pick:')
@@ -266,13 +271,13 @@ def main():
             unsafe_allow_html=True,
         )
         st.title("About Moody Tunes")
-        st.write("Moody Tunes is a user interface that recognizes your mood using your facial expression and gives the user music suggestions from the same mood")
+        st.write("Moody Tunes is a web app that recognizes your mood using your facial expression and gives the user music suggestions from the same mood")
         st.divider()
         st.markdown("**How it works:**")
         st.write("1. Drag and drop or click in 'Browse files' to upload your picture to start the mood detection.")
         st.write("2. The application will detect your facial expression and display it on the screen.")
         st.write("4. Based on your expression, the application will recommend songs that match your mood.")
-        st.write("5. You can listen to the recommended songs on Spotify directly using the link presented.")
+        st.write("5. A Spotify page will be open for you to listen to your Moody Tunes.")
         st.divider()
         st.markdown("**Note:**")
         st.write("For the mood detection to work accurately, ensure that your face is well-illuminated and directly facing the camera.")

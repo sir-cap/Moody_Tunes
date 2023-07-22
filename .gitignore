@@ -2,4 +2,4 @@
 /pictures
 .DS_Store
 .cache
-config.py
+/secrets.toml

@@ -1,5 +1,6 @@
 #importing libraries
 import streamlit as st
+from streamlit import secrets
 import cv2
 import numpy as np
 import time
@@ -19,7 +20,14 @@ import base64
 import subprocess
 from io import BytesIO
 import webbrowser
-from config import SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIFY_USER_ID, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
+
+#adding passwords
+spotipy_client_id = secrets["SPOTIPY_CLIENT_ID"]
+spotipy_client_secret = secrets["SPOTIPY_CLIENT_SECRET"]
+cloudinary_api_key = secrets["CLOUDINARY_API_KEY"]
+cloudinary_api_secret = secrets["CLOUDINARY_API_SECRET"]
+SPOTIFY_USER_ID = secrets["SPOTIFY_USER_ID"]
+CLOUDINARY_CLOUD_NAME = secrets["CLOUDINARY_CLOUD_NAME"]
 
 # Adding background
 page_bg = """
@@ -40,8 +48,8 @@ textColor = "#c9c9c9"
 # Initialize Cloudinary configuration
 cloudinary.config(
     cloud_name=CLOUDINARY_CLOUD_NAME,
-    api_key=CLOUDINARY_API_KEY,
-    api_secret=CLOUDINARY_API_SECRET
+    api_key=cloudinary_api_key,
+    api_secret=cloudinary_api_secret
 )
 
 # Function to save the captured image on Cloudinary
@@ -120,7 +128,7 @@ def get_recommendations(emotion, songs):
     emotion_songs = songs[songs['Mood'].str.lower() == emotion.lower()]
 
     if not emotion_songs.empty:
-        recommended_songs = emotion_songs.sample(n=7)
+        recommended_songs = emotion_songs.sample(n=10)
         return recommended_songs
     else:
         return pd.DataFrame()
@@ -129,8 +137,8 @@ def get_recommendations(emotion, songs):
 def create_spotify_playlist(recommended_songs, username, emotion):
     # Create a new playlist
     playlist_name = f"MoodyTunes for a {emotion} day - {time.strftime('%d/%m/%Y')}"
-    sp = spotipy.Spotify(auth_manager=spotipy.oauth2.SpotifyOAuth(scope="playlist-modify-public", client_id=SPOTIPY_CLIENT_ID,
-                                                             client_secret=SPOTIPY_CLIENT_SECRET,redirect_uri="https://moodytunes.streamlit.app/callback"))
+    sp = spotipy.Spotify(auth_manager=spotipy.oauth2.SpotifyOAuth(scope="playlist-modify-public", client_id=spotipy_client_id,
+                                                             client_secret=spotipy_client_secret,redirect_uri="https://moodytunes.streamlit.app/callback"))
 
 
     playlist = sp.user_playlist_create(user=username, name=playlist_name, public=True)

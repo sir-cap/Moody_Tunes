@@ -19,7 +19,6 @@ import cloudinary.api
 import base64
 import subprocess
 from io import BytesIO
-import webbrowser
 
 #adding passwords
 spotipy_client_id = secrets["SPOTIPY_CLIENT_ID"]
@@ -159,9 +158,7 @@ def create_spotify_playlist(recommended_songs, username, emotion):
 
     # Add info if it's successful
     playlist_url = playlist['external_urls']['spotify']
-    st.warning(f"You'll be redirect to your MoodyTunes on [Spotify]({playlist_url})")
-    webbrowser.open(playlist_url)
-
+    st.warning(f"::headphones:: Listen to your MoodyTunes on [Spotify]({playlist_url})")
 
 # Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
 def main():

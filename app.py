@@ -160,7 +160,7 @@ def create_spotify_playlist(recommended_songs, username, emotion):
     # Add info if it's successful
     playlist_url = playlist['external_urls']['spotify']
     st.warning(f"You'll be redirect to your MoodyTunes on [Spotify]({playlist_url})")
-    webbrowser.open_new_tab(playlist_url)
+    webbrowser.open(playlist_url)
 
 
 # Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist

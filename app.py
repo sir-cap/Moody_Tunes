@@ -158,7 +158,7 @@ def create_spotify_playlist(recommended_songs, username, emotion):
 
     # Add info if it's successful
     playlist_url = playlist['external_urls']['spotify']
-    st.warning(f":headphones: Listen to your MoodyTunes on [Spotify]({playlist_url}):headphones:")
+    st.warning(f":headphones: Listen to your MoodyTunes on [Spotify]({playlist_url}) :headphones:")
 
 # Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
 def main():
@@ -243,7 +243,7 @@ def main():
                     st.warning('No face detected in the uploaded image. Try again! :pick:')
             else:
                 detected_emotion = None
-                st.warning('Unable to read the uploaded image. Please try again.')
+                st.warning('Unable to read the uploaded image. Please try again, folks!')
             
         # Adding about page and the homepage image 
     elif app_mode == "About Moody Tunes":

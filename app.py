@@ -158,7 +158,7 @@ def create_spotify_playlist(recommended_songs, username, emotion):
 
     # Add info if it's successful
     playlist_url = playlist['external_urls']['spotify']
-    st.warning(f":headphones: Listen to your MoodyTunes on [Spotify]({playlist_url})")
+    st.warning(f":headphones: Listen to your MoodyTunes on [Spotify]({playlist_url}):headphones:")
 
 # Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
 def main():

@@ -3,3 +3,5 @@
 .DS_Store
 .cache
 /secrets.toml
+/Testing pictures
+.emotion_counts_tableau.csv

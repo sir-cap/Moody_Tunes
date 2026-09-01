@@ -2,6 +2,9 @@
     
     Personalized song recommendations based on your mood
     Data Analytics Bootcamp final project at Ironhack Portugal
+
+    🔗 Live demo: https://moodytunes.streamlit.app
+    (free-tier hosting — the app sleeps after inactivity, first load can take a minute to wake up)
     
     
 ## About

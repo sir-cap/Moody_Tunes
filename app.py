@@ -69,6 +69,12 @@ a {
     min-width: 0 !important;
     width: auto !important;
 }
+/* Streamlit's default page padding (96px top / 160px bottom) left a lot of empty space
+   above the header and below the last widget. */
+[data-testid="stMainBlockContainer"] {
+    padding-top: 28px !important;
+    padding-bottom: 40px !important;
+}
 /* Shrink the header logo/title on narrow screens — at the fixed 130px logo width the header
    was taking up a big share of a phone screen's height. Desktop is untouched. This also caps
    the detected-photo image, but that one already fits its container, so it's a no-op there. */

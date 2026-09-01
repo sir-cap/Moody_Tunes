@@ -6,6 +6,9 @@
 /secrets.toml
 .streamlit/secrets.toml
 /Testing pictures
-.emotion_counts_tableau.csv
+emotion_counts_tableau.csv
 __pycache__/
 *.pyc
+Moody_tunes/
+main.py
+haarcascade_frontalface_default.xml

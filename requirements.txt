@@ -7,5 +7,3 @@ spotipy
 tensorflow
 Pillow
 cloudinary
-tensorflow
-tensorrt

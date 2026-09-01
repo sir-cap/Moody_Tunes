@@ -1,7 +1,9 @@
 /venv
+.venv
 /pictures
 .DS_Store
 .cache
 /secrets.toml
+.streamlit/secrets.toml
 /Testing pictures
 .emotion_counts_tableau.csv

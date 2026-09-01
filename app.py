@@ -27,21 +27,22 @@ cloudinary_api_secret = secrets["CLOUDINARY_API_SECRET"]
 SPOTIFY_USER_ID = secrets["SPOTIFY_USER_ID"]
 CLOUDINARY_CLOUD_NAME = secrets["CLOUDINARY_CLOUD_NAME"]
 
-# Adding background — plain flat color (no gradient), cool blue + chocolate brown palette
-# (#7CA7EB / #402924), matching the theme colors in .streamlit/config.toml.
+# Adding background — plain flat color (no gradient). Roles swapped per latest direction:
+# #7CA7EB (blue) is now the background, #402924 (chocolate brown) is now the accent color,
+# matching the theme colors in .streamlit/config.toml.
 page_bg = """
 <style>
 [data-testid="stAppViewContainer"] {
-    background: #2A1A14;
+    background: #7CA7EB;
 }
 hr {
-    background-color: rgba(124, 167, 235, 0.5) !important;
+    background-color: rgba(64, 41, 36, 0.5) !important;
 }
 h1 {
-    color: #7CA7EB !important;
+    color: #402924 !important;
 }
 [data-testid="stVerticalBlockBorderWrapper"] {
-    border-color: rgba(124, 167, 235, 0.45) !important;
+    border-color: rgba(64, 41, 36, 0.45) !important;
 }
 </style>
 """

@@ -26,23 +26,25 @@ cloudinary_api_key = secrets["CLOUDINARY_API_KEY"]
 cloudinary_api_secret = secrets["CLOUDINARY_API_SECRET"]
 SPOTIFY_USER_ID = secrets["SPOTIFY_USER_ID"]
 CLOUDINARY_CLOUD_NAME = secrets["CLOUDINARY_CLOUD_NAME"]
+# Refresh token from a one-time manual OAuth authorization (see reference/spotify-reauth.md).
+# Stored in Secrets, not a local .cache file, so it survives Streamlit Cloud redeploys.
+SPOTIFY_REFRESH_TOKEN = secrets["SPOTIFY_REFRESH_TOKEN"]
 
-# Adding background — plain flat color (no gradient). Roles swapped per latest direction:
-# #7CA7EB (blue) is now the background, #402924 (chocolate brown) is now the accent color,
-# matching the theme colors in .streamlit/config.toml.
+# Adding background — plain flat color (no gradient). Chocolate brown background,
+# cool blue (#7CA7EB) accent color, matching the theme colors in .streamlit/config.toml.
 page_bg = """
 <style>
 [data-testid="stAppViewContainer"] {
-    background: #7CA7EB;
+    background: #2A1A14;
 }
 hr {
-    background-color: rgba(64, 41, 36, 0.5) !important;
+    background-color: rgba(124, 167, 235, 0.5) !important;
 }
 h1 {
-    color: #402924 !important;
+    color: #7CA7EB !important;
 }
 [data-testid="stVerticalBlockBorderWrapper"] {
-    border-color: rgba(64, 41, 36, 0.45) !important;
+    border-color: rgba(124, 167, 235, 0.45) !important;
 }
 </style>
 """
@@ -155,8 +157,24 @@ def get_recommendations(emotion, songs):
 def create_spotify_playlist(recommended_songs, username, emotion):
     # Create a new playlist
     playlist_name = f"MoodyTunes for a {emotion} day - {time.strftime('%d/%m/%Y')}"
-    sp = spotipy.Spotify(auth_manager=spotipy.oauth2.SpotifyOAuth(scope="playlist-modify-public", client_id=spotipy_client_id,
-                                                             client_secret=spotipy_client_secret,redirect_uri="https://moodytunes.streamlit.app/callback"))
+    # Seed the auth manager with the stored refresh token via a MemoryCacheHandler instead of
+    # relying on a local .cache file: Streamlit Cloud's filesystem resets on every redeploy, so
+    # a file-based cache silently loses the token each time the app rebuilds. expires_at=0
+    # forces an immediate refresh using SPOTIFY_REFRESH_TOKEN on first use.
+    cache_handler = spotipy.cache_handler.MemoryCacheHandler(token_info={
+        "refresh_token": SPOTIFY_REFRESH_TOKEN,
+        "access_token": "",
+        "expires_at": 0,
+        "scope": "playlist-modify-public",
+        "token_type": "Bearer",
+    })
+    sp = spotipy.Spotify(auth_manager=spotipy.oauth2.SpotifyOAuth(
+        scope="playlist-modify-public",
+        client_id=spotipy_client_id,
+        client_secret=spotipy_client_secret,
+        redirect_uri="https://moodytunes.streamlit.app/callback",
+        cache_handler=cache_handler,
+    ))
 
 
     playlist = sp.user_playlist_create(user=username, name=playlist_name, public=True)

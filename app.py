@@ -57,6 +57,18 @@ a {
     color: #2E1B16 !important;
     font-weight: 600;
 }
+/* Keep the header's logo+title columns side by side at every screen size. Streamlit's
+   columns stack on narrow viewports by default (each stColumn gets a forced
+   min-width: calc(100% - 24px), so on mobile the logo ends up above the title instead of
+   next to it). This app only uses st.columns for the header, so it's safe to override
+   everywhere rather than scoping to a media query. */
+[data-testid="stHorizontalBlock"] {
+    flex-wrap: nowrap !important;
+}
+[data-testid="stColumn"] {
+    min-width: 0 !important;
+    width: auto !important;
+}
 /* Shrink the header logo/title on narrow screens — at the fixed 130px logo width the header
    was taking up a big share of a phone screen's height. Desktop is untouched. This also caps
    the detected-photo image, but that one already fits its container, so it's a no-op there. */

@@ -101,6 +101,27 @@ cloudinary.config(
     api_secret=cloudinary_api_secret
 )
 
+# Small inline-SVG icon set for use inside styled_message() below. Streamlit's
+# `:material/icon_name:` shortcode (used in native widgets like st.tabs/st.button, see
+# render_header/main) only gets parsed by Streamlit's own markdown compiler — verified
+# locally that it does NOT get parsed when unsafe_allow_html=True, it just prints the raw
+# ":material/..." text. Since styled_message() always uses unsafe_allow_html, real inline
+# SVGs (colored via currentColor, so they pick up the surrounding text color automatically)
+# are used here instead, rather than relying on that shortcode.
+_ICONS = {
+    "check_circle": '<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
+    "headphones": '<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2" y="14" width="5" height="7" rx="2"/><rect x="17" y="14" width="5" height="7" rx="2"/>',
+    "music_note": '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+    "refresh": '<path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 16v-4h4"/>',
+}
+
+def icon(name):
+    return (
+        f'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+        f'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+        f'style="vertical-align:-3px;">{_ICONS[name]}</svg>'
+    )
+
 # Brand-colored replacement for st.success/st.info/st.warning: Streamlit's built-in alert
 # colors (green/blue/yellow) aren't part of this app's blue+brown palette and clash with it.
 # html param lets a caller embed a styled link (see the Spotify box) instead of plain text.
@@ -259,8 +280,8 @@ def create_spotify_playlist(recommended_songs, username, emotion):
     # style="...!important" on the link: the global `a { color: ... !important }` rule (added
     # for other stray blue links) would otherwise beat this inline color too.
     styled_message(
-        ':material/headphones: Listen to your MoodyTunes on '
-        f'<a href="{playlist_url}" style="color:#93BAF2 !important;font-weight:700;">Spotify</a> :material/headphones:'
+        f'{icon("headphones")} Listen to your MoodyTunes on '
+        f'<a href="{playlist_url}" style="color:#93BAF2 !important;font-weight:700;">Spotify</a> {icon("headphones")}'
     )
 
 # Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
@@ -320,7 +341,7 @@ def main():
                 prediction = st.session_state["mt_prediction"]
 
                 if detected_emotion is not None:
-                    styled_message(':material/check_circle: Great job!')
+                    styled_message(f'{icon("check_circle")} Great job!')
 
                     # Save the image on Cloudinary — once per photo, not on every shuffle rerun.
                     if not st.session_state["mt_playlist_done"]:
@@ -360,10 +381,10 @@ def main():
                                 try:
                                     create_spotify_playlist(recommended_songs, SPOTIFY_USER_ID, detected_emotion)
                                 except spotipy.SpotifyBaseException:
-                                    styled_message("Couldn't auto-create a Spotify playlist right now (the Spotify connection needs to be re-authorized), but here are your song recommendations above! :material/music_note:")
+                                    styled_message(f"Couldn't auto-create a Spotify playlist right now (the Spotify connection needs to be re-authorized), but here are your song recommendations above! {icon('music_note')}")
                                 st.session_state["mt_playlist_done"] = True
                 else:
-                    styled_message(':material/sentiment_dissatisfied: No face detected in the photo. Try again!')
+                    styled_message(f'{icon("refresh")} No face detected in the photo. Try again!')
             else:
                 styled_message('Unable to read the photo. Please try again, folks!')
 

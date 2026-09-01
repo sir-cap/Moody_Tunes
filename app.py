@@ -85,10 +85,10 @@ a {
         height: auto !important;
     }
     h1 {
-        font-size: 1.8rem !important;
+        font-size: 2.1rem !important;
     }
     [data-testid="stCaptionContainer"] {
-        font-size: 0.85rem !important;
+        font-size: 0.75rem !important;
     }
 }
 </style>

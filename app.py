@@ -224,7 +224,13 @@ def main():
 
         if active_file is not None:
             # Convert the uploaded/captured file to an OpenCV image
-            file_bytes = np.asarray(bytearray(active_file.read()), dtype=np.uint8)
+            # .getvalue() (not .read()): Streamlit reruns the whole script on every
+            # interaction and reuses the same UploadedFile object across reruns — .read()
+            # advances an internal cursor, so a second read (e.g. after a rerun triggered by
+            # the tabs widget) returns empty bytes, which crashes cv2.imdecode with
+            # "!buf.empty()" instead of decoding the image. getvalue() always returns the
+            # full buffer regardless of prior reads.
+            file_bytes = np.asarray(bytearray(active_file.getvalue()), dtype=np.uint8)
             cv_image = cv2.imdecode(file_bytes, 1)  # 1 indicates loading the image in color
 
             # Perform emotion detection

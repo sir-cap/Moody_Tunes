@@ -43,6 +43,9 @@ hr {
 h1 {
     color: #93BAF2 !important;
 }
+[data-testid="stCaptionContainer"] {
+    color: #FFFFFF !important;
+}
 [data-testid="stVerticalBlockBorderWrapper"] {
     border-color: rgba(147, 186, 242, 0.45) !important;
 }
@@ -82,19 +85,29 @@ def save_image_on_cloudinary(image_data, filename):
     response = cloudinary.uploader.upload(image_bytes, public_id=filename)
     return response['secure_url']
 
-# Function to treat the captured image and return of image with emotion
+# Function to treat the captured image and return the image with emotion + confidence scores.
+# Face detection uses OpenCV's YuNet (a small DNN, see face_detection_yunet.onnx), which is
+# meaningfully more reliable than the Haar Cascade this used to use — especially on angled
+# faces, partial occlusion, and varied lighting.
 def detect_emotion(cv_image):
-    # Define the variable detected_emotion before the if block
     detected_emotion = None
+    prediction = None
 
-    gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-    faces = face_classifier.detectMultiScale(gray, minNeighbors=2)
+    h, w = cv_image.shape[:2]
+    face_detector.setInputSize((w, h))
+    _, faces = face_detector.detect(cv_image)
 
-    if len(faces) > 0:
-        (x, y, w, h) = faces[0]  # Consider the first detected face only
+    if faces is not None and len(faces) > 0:
+        # Consider the most confident detection only. YuNet's box can extend slightly outside
+        # the image (e.g. a small negative x/y near an edge) — clamp the start coordinates so
+        # the slice below doesn't wrap around via negative indexing.
+        x, y, box_w, box_h = faces[0][:4].astype(int)
+        x, y = max(x, 0), max(y, 0)
+
         cv_image_with_label = cv_image.copy()  # Create a copy of the original image
-        cv2.rectangle(cv_image_with_label, (x, y), (x + w, y + h), (255, 0, 0), 4)
-        roi_gray = gray[y:y + h, x:x + w]
+        cv2.rectangle(cv_image_with_label, (x, y), (x + box_w, y + box_h), (255, 0, 0), 4)
+        gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+        roi_gray = gray[y:y + box_h, x:x + box_w]
         roi_gray = cv2.resize(roi_gray, (48, 48), interpolation=cv2.INTER_AREA)
 
         if np.sum([roi_gray]) != 0:
@@ -114,34 +127,30 @@ def detect_emotion(cv_image):
 
         # Convert the modified image to RGB before returning
         rgb_image = cv2.cvtColor(cv_image_with_label, cv2.COLOR_BGR2RGB)
-        
-        # Return the detected emotion and the modified image
-        return detected_emotion, rgb_image
+
+        # Return the detected emotion, the modified image, and the full per-emotion confidence
+        # scores (used to render a confidence chart in main()).
+        return detected_emotion, rgb_image, prediction
 
     else:
         # Convert the original image to RGB before returning
         rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
 
         # Return the detected emotion and the original image (since no face detected)
-        return detected_emotion, rgb_image
+        return detected_emotion, rgb_image, prediction
 
 # Adding the songs dataframe and the page link for Spotify playlist
 songs = pd.read_csv('cleaned_songs.csv')
 os.environ["http://localhost:8501/callback"] = "https://moodytunes.streamlit.app/callback"
 
 # Path for the model
-face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+face_detector = cv2.FaceDetectorYN.create(
+    "face_detection_yunet.onnx", "", (320, 320), score_threshold=0.6
+)
 classifier = load_model('model.h5')
 
-# Defining emotion clusters and the variable to save the detected emotion
+# Defining emotion clusters
 emotion_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Sad', 'Surprise']
-detected_emotion = None  # Variable to store the detected emotion
-
-# Adding a countdown
-countdown_time = 3  # Set the countdown time in seconds
-countdown_start = False  # Flag to indicate if countdown has started
-countdown_end_time = None  # Variable to store the countdown end time
-detected_emotion = None  # Variable to store the detected emotion
 
 # Function to match the songs moods with the captured images mood
 def get_recommendations(emotion, songs):
@@ -199,7 +208,6 @@ def create_spotify_playlist(recommended_songs, username, emotion):
 
 # Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
 def main():
-    global detected_emotion  # Mark variables as global
     st.sidebar.title("Navigation")
 
     app_mode = st.sidebar.selectbox("Choose a page", ["Home", "About Moody Tunes"])
@@ -220,8 +228,6 @@ def main():
         # in normal use, but prefer a fresh camera shot if somehow both are set).
         active_file = camera_file if camera_file is not None else uploaded_file
 
-        detected_emotion = None  # Reset detected emotion to None
-
         if active_file is not None:
             # Convert the uploaded/captured file to an OpenCV image
             # .getvalue() (not .read()): Streamlit reruns the whole script on every
@@ -233,40 +239,72 @@ def main():
             file_bytes = np.asarray(bytearray(active_file.getvalue()), dtype=np.uint8)
             cv_image = cv2.imdecode(file_bytes, 1)  # 1 indicates loading the image in color
 
-            # Perform emotion detection
             if cv_image is not None:
-                with st.spinner("Detecting emotion from the photo..."):
-                    countdown_time = 3  # Set the countdown time in seconds
-                    countdown_start = True  # Flag to indicate if countdown has started
-                    countdown_end_time = time.time() + countdown_time
-                    detected_emotion, rgb_image = detect_emotion(cv_image)
+                # Only redo detection (and the Cloudinary upload / Spotify playlist below) when
+                # this is a genuinely new photo. Interacting with a widget further down (like
+                # the Shuffle button) also triggers a full script rerun, but active_file stays
+                # the same object — file_id is stable across reruns of the same upload, so it's
+                # the right key to detect "actually new photo" vs "just rerunning".
+                if st.session_state.get("mt_file_id") != active_file.file_id:
+                    with st.spinner("Detecting emotion from the photo..."):
+                        detected_emotion, rgb_image, prediction = detect_emotion(cv_image)
+                    st.session_state["mt_file_id"] = active_file.file_id
+                    st.session_state["mt_detected_emotion"] = detected_emotion
+                    st.session_state["mt_rgb_image"] = rgb_image
+                    st.session_state["mt_prediction"] = prediction
+                    st.session_state["mt_recommended_songs"] = None
+                    st.session_state["mt_playlist_done"] = False
+
+                detected_emotion = st.session_state["mt_detected_emotion"]
+                rgb_image = st.session_state["mt_rgb_image"]
+                prediction = st.session_state["mt_prediction"]
 
                 if detected_emotion is not None:
                     st.success('Great job! 👍')
-                    # Save the image on Cloudinary
-                    timestamp = time.strftime("%Y%m%d-%H%M%S")
-                    picture_filename = f"{detected_emotion}---{timestamp}.jpg"
-                    cloudinary_url = save_image_on_cloudinary(rgb_image, picture_filename)
+
+                    # Save the image on Cloudinary — once per photo, not on every shuffle rerun.
+                    if not st.session_state["mt_playlist_done"]:
+                        timestamp = time.strftime("%Y%m%d-%H%M%S")
+                        picture_filename = f"{detected_emotion}---{timestamp}.jpg"
+                        save_image_on_cloudinary(rgb_image, picture_filename)
 
                     with st.container(border=True):
                         # Display the uploaded and processed image
                         st.image(rgb_image, use_container_width=True)
 
+                        # Confidence across all 7 emotions, not just the winning one — the
+                        # model already computes this, it just wasn't being shown before.
+                        if prediction is not None:
+                            st.caption("Confidence by emotion")
+                            confidence_df = pd.DataFrame(
+                                {"Confidence (%)": prediction * 100}, index=emotion_labels
+                            )
+                            st.bar_chart(confidence_df, height=200)
+
                         # Create a container for the recommended songs and subheader
                         st.subheader(f"For your {detected_emotion} mood, your tunes are:")
-                        songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs dataframe
-                        recommended_songs = get_recommendations(detected_emotion, songs_df)
+                        if st.session_state["mt_recommended_songs"] is None:
+                            st.session_state["mt_recommended_songs"] = get_recommendations(detected_emotion, songs)
+                        recommended_songs = st.session_state["mt_recommended_songs"]
+
                         if not recommended_songs.empty:
                             st.dataframe(recommended_songs[['Track', 'Artist']], use_container_width=True)
-                            try:
-                                create_spotify_playlist(recommended_songs, SPOTIFY_USER_ID, detected_emotion)
-                            except spotipy.SpotifyBaseException:
-                                st.info("Couldn't auto-create a Spotify playlist right now (the Spotify connection needs to be re-authorized), but here are your song recommendations above! 🎵")
+
+                            if st.button("🔀 Shuffle songs"):
+                                st.session_state["mt_recommended_songs"] = get_recommendations(detected_emotion, songs)
+                                st.rerun()
+
+                            # Playlist is created once per photo (not re-created on shuffle —
+                            # shuffling only changes what's displayed here).
+                            if not st.session_state["mt_playlist_done"]:
+                                try:
+                                    create_spotify_playlist(recommended_songs, SPOTIFY_USER_ID, detected_emotion)
+                                except spotipy.SpotifyBaseException:
+                                    st.info("Couldn't auto-create a Spotify playlist right now (the Spotify connection needs to be re-authorized), but here are your song recommendations above! 🎵")
+                                st.session_state["mt_playlist_done"] = True
                 else:
-                    detected_emotion = None
                     st.warning('No face detected in the photo. Try again! 😅')
             else:
-                detected_emotion = None
                 st.warning('Unable to read the photo. Please try again, folks!')
 
         # Adding about page and the homepage image

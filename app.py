@@ -27,16 +27,12 @@ cloudinary_api_secret = secrets["CLOUDINARY_API_SECRET"]
 SPOTIFY_USER_ID = secrets["SPOTIFY_USER_ID"]
 CLOUDINARY_CLOUD_NAME = secrets["CLOUDINARY_CLOUD_NAME"]
 
-# Adding background — soft dual-glow dark gradient, cool blue + chocolate brown palette
+# Adding background — plain flat color (no gradient), cool blue + chocolate brown palette
 # (#7CA7EB / #402924), matching the theme colors in .streamlit/config.toml.
 page_bg = """
 <style>
 [data-testid="stAppViewContainer"] {
-    background:
-        radial-gradient(1300px circle at 12% -8%, rgba(124, 167, 235, 0.50), transparent 62%),
-        radial-gradient(900px circle at 100% 10%, rgba(64, 41, 36, 0.55), transparent 55%),
-        radial-gradient(1000px circle at 15% 100%, rgba(124, 167, 235, 0.30), transparent 60%),
-        #150d0b;
+    background: #150d0b;
 }
 hr {
     background-color: rgba(124, 167, 235, 0.5) !important;

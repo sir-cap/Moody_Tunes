@@ -16,7 +16,6 @@ from PIL import Image
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
-import base64
 import subprocess
 from io import BytesIO
 
@@ -28,12 +27,16 @@ cloudinary_api_secret = secrets["CLOUDINARY_API_SECRET"]
 SPOTIFY_USER_ID = secrets["SPOTIFY_USER_ID"]
 CLOUDINARY_CLOUD_NAME = secrets["CLOUDINARY_CLOUD_NAME"]
 
-# Adding background
+# Adding background — soft dual-glow dark gradient (subtler, more current than a hard
+# circular vignette), colors picked to echo the logo's violet/blue ring.
 page_bg = """
 <style>
 [data-testid="stAppViewContainer"] {
-    background: rgb(2, 0, 36);
-    background: radial-gradient(circle, rgba(2, 0, 36, 1) 0%, rgba(8, 8, 109, 1) 60%, rgba(0, 84, 255, 1) 80%);
+    background:
+        radial-gradient(1100px circle at 12% -8%, rgba(124, 58, 237, 0.28), transparent 58%),
+        radial-gradient(900px circle at 100% 8%, rgba(37, 99, 235, 0.24), transparent 55%),
+        radial-gradient(700px circle at 20% 100%, rgba(29, 78, 216, 0.16), transparent 55%),
+        #07071a;
 }
 </style>
 """
@@ -53,63 +56,19 @@ cloudinary.config(
 
 # Load the logo once and render a responsive header (logo + title + optional subtitle).
 # Replaces the old absolutely-positioned floating logo, which overlapped the title on narrow
-# (mobile) screens. A flex row that wraps avoids that entirely.
+# (mobile) screens, and the raw-HTML flex version that broke emoji-shortcode rendering
+# (st.markdown's shortcode->emoji conversion doesn't run inside raw HTML). Native st.columns
+# already stacks responsively on narrow screens, so no custom CSS/media queries needed.
 _logo_path = "homepage_image.png"
-with open(_logo_path, "rb") as _f:
-    _logo_b64 = base64.b64encode(_f.read()).decode()
 
 def render_header(title, subtitle=None):
-    st.markdown(
-        """
-        <style>
-        .mt-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin: 8px 0 4px;
-        }
-        .mt-header img {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-        .mt-header h1 {
-            margin: 0;
-            font-size: 2.4rem;
-            line-height: 1.15;
-        }
-        .mt-header-sub {
-            margin: 2px 0 0;
-            font-size: 1.05rem;
-            opacity: 0.85;
-        }
-        @media (max-width: 640px) {
-            .mt-header { gap: 12px; }
-            .mt-header img { width: 44px; height: 44px; }
-            .mt-header h1 { font-size: 1.7rem; }
-            .mt-header-sub { font-size: 0.95rem; }
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-    subtitle_html = f'<p class="mt-header-sub">{subtitle}</p>' if subtitle else ""
-    st.markdown(
-        f"""
-        <div class="mt-header">
-            <a href="/" title="Reload">
-                <img src="data:image/png;base64,{_logo_b64}" alt="MoodyTunes logo">
-            </a>
-            <div>
-                <h1>{title}</h1>
-                {subtitle_html}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    logo_col, text_col = st.columns([1, 5], vertical_alignment="center")
+    with logo_col:
+        st.image(_logo_path, width=76)
+    with text_col:
+        st.title(title)
+        if subtitle:
+            st.caption(subtitle)
 
 # Function to save the captured image on Cloudinary
 def save_image_on_cloudinary(image_data, filename):
@@ -218,7 +177,7 @@ def create_spotify_playlist(recommended_songs, username, emotion):
 
     # Add info if it's successful
     playlist_url = playlist['external_urls']['spotify']
-    st.warning(f":headphones: Listen to your MoodyTunes on [Spotify]({playlist_url}) :headphones:")
+    st.warning(f"🎧 Listen to your MoodyTunes on [Spotify]({playlist_url}) 🎧")
 
 # Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
 def main():
@@ -230,7 +189,7 @@ def main():
     if app_mode == "Home":
         st.markdown(page_bg, unsafe_allow_html=True)
 
-        render_header("MOODY TUNES", ":headphones: Get song recommendations based on your face mood")
+        render_header("MOODY TUNES", "🎧 Get song recommendations based on your face mood")
         st.divider()
 
         upload_tab, camera_tab = st.tabs(["📁 Upload a photo", "📸 Take a photo"])
@@ -259,7 +218,7 @@ def main():
                     detected_emotion, rgb_image = detect_emotion(cv_image)
 
                 if detected_emotion is not None:
-                    st.success('Great job! :thumbsup:')
+                    st.success('Great job! 👍')
                     # Save the image on Cloudinary
                     timestamp = time.strftime("%Y%m%d-%H%M%S")
                     picture_filename = f"{detected_emotion}---{timestamp}.jpg"
@@ -275,10 +234,13 @@ def main():
                         recommended_songs = get_recommendations(detected_emotion, songs_df)
                         if not recommended_songs.empty:
                             st.dataframe(recommended_songs[['Track', 'Artist']], use_container_width=True)
-                            create_spotify_playlist(recommended_songs, SPOTIFY_USER_ID , detected_emotion)
+                            try:
+                                create_spotify_playlist(recommended_songs, SPOTIFY_USER_ID, detected_emotion)
+                            except spotipy.SpotifyBaseException:
+                                st.info("Couldn't auto-create a Spotify playlist right now (the Spotify connection needs to be re-authorized), but here are your song recommendations above! 🎵")
                 else:
                     detected_emotion = None
-                    st.warning('No face detected in the photo. Try again! :pick:')
+                    st.warning('No face detected in the photo. Try again! 😅')
             else:
                 detected_emotion = None
                 st.warning('Unable to read the photo. Please try again, folks!')

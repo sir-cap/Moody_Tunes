@@ -31,20 +31,20 @@ CLOUDINARY_CLOUD_NAME = secrets["CLOUDINARY_CLOUD_NAME"]
 SPOTIFY_REFRESH_TOKEN = secrets["SPOTIFY_REFRESH_TOKEN"]
 
 # Adding background — plain flat color (no gradient). Chocolate brown background,
-# cool blue (#7CA7EB) accent color, matching the theme colors in .streamlit/config.toml.
+# cool blue (#93BAF2) accent color, matching the theme colors in .streamlit/config.toml.
 page_bg = """
 <style>
 [data-testid="stAppViewContainer"] {
     background: #2A1A14;
 }
 hr {
-    background-color: rgba(124, 167, 235, 0.5) !important;
+    background-color: rgba(147, 186, 242, 0.5) !important;
 }
 h1 {
-    color: #7CA7EB !important;
+    color: #93BAF2 !important;
 }
 [data-testid="stVerticalBlockBorderWrapper"] {
-    border-color: rgba(124, 167, 235, 0.45) !important;
+    border-color: rgba(147, 186, 242, 0.45) !important;
 }
 </style>
 """

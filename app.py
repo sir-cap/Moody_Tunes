@@ -32,7 +32,7 @@ CLOUDINARY_CLOUD_NAME = secrets["CLOUDINARY_CLOUD_NAME"]
 page_bg = """
 <style>
 [data-testid="stAppViewContainer"] {
-    background: #150d0b;
+    background: #2A1A14;
 }
 hr {
     background-color: rgba(124, 167, 235, 0.5) !important;

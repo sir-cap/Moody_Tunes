@@ -1,8 +1,8 @@
 streamlit
 opencv-python-headless==4.10.0.84
-numpy
+numpy<2
 pandas
 spotipy
-tensorflow
+tensorflow==2.15.0
 Pillow
 cloudinary

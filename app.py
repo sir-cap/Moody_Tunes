@@ -30,24 +30,26 @@ CLOUDINARY_CLOUD_NAME = secrets["CLOUDINARY_CLOUD_NAME"]
 # Stored in Secrets, not a local .cache file, so it survives Streamlit Cloud redeploys.
 SPOTIFY_REFRESH_TOKEN = secrets["SPOTIFY_REFRESH_TOKEN"]
 
-# Adding background — plain flat color (no gradient). Chocolate brown background,
-# cool blue (#93BAF2) accent color, matching the theme colors in .streamlit/config.toml.
+# Adding background — plain flat color (no gradient). Inverted from the earlier version:
+# cool blue (#93BAF2) background now, chocolate brown (#402924) text/accent color, matching
+# the theme colors in .streamlit/config.toml. Every text color here is picked to read clearly
+# on the light blue background — no white-on-light text anywhere.
 page_bg = """
 <style>
 [data-testid="stAppViewContainer"] {
-    background: #2A1A14;
+    background: #93BAF2;
 }
 hr {
-    background-color: rgba(147, 186, 242, 0.5) !important;
+    background-color: rgba(64, 41, 36, 0.5) !important;
 }
 h1 {
-    color: #93BAF2 !important;
+    color: #402924 !important;
 }
 [data-testid="stCaptionContainer"] {
-    color: #FFFFFF !important;
+    color: #2A1A14 !important;
 }
 [data-testid="stVerticalBlockBorderWrapper"] {
-    border-color: rgba(147, 186, 242, 0.45) !important;
+    border-color: rgba(64, 41, 36, 0.45) !important;
 }
 </style>
 """
@@ -204,7 +206,15 @@ def create_spotify_playlist(recommended_songs, username, emotion):
 
     # Add info if it's successful
     playlist_url = playlist['external_urls']['spotify']
-    st.warning(f"🎧 Listen to your MoodyTunes on [Spotify]({playlist_url}) 🎧")
+    # A custom-styled box instead of st.warning(): Streamlit's built-in warning color (an
+    # olive/yellow-green) doesn't belong to the app's palette and isn't reliably overridable
+    # via CSS across Streamlit versions, so this renders with our own brown/cream/blue colors.
+    st.markdown(
+        f'<div style="background:#402924;color:#EDE3DA;padding:14px 18px;border-radius:8px;'
+        f'margin-top:10px;font-size:15px;">🎧 Listen to your MoodyTunes on '
+        f'<a href="{playlist_url}" style="color:#93BAF2;font-weight:600;">Spotify</a> 🎧</div>',
+        unsafe_allow_html=True,
+    )
 
 # Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
 def main():

@@ -45,10 +45,11 @@ hr {
 h1, h2, h3, label, [data-testid="stWidgetLabel"] p {
     color: #2E1B16 !important;
 }
-/* A lighter brown for secondary accents (subtitle, tab labels) — gives some tonal variety
-   against the darker brown used for headings/labels, instead of a single flat brown. */
 [data-testid="stCaptionContainer"], [data-testid="stTab"] p {
-    color: #4A3020 !important;
+    color: #2A1A12 !important;
+}
+[data-testid="stTab"] p {
+    font-weight: 700 !important;
 }
 [data-testid="stVerticalBlockBorderWrapper"] {
     border-color: rgba(46, 27, 22, 0.5) !important;

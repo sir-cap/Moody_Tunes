@@ -65,9 +65,9 @@ cloudinary.config(
 _logo_path = "homepage_image.png"
 
 def render_header(title, subtitle=None):
-    logo_col, text_col = st.columns([1, 5], vertical_alignment="center")
+    logo_col, text_col = st.columns([1, 4], vertical_alignment="center")
     with logo_col:
-        st.image(_logo_path, width=76)
+        st.image(_logo_path, width=130)
     with text_col:
         st.title(title)
         if subtitle:

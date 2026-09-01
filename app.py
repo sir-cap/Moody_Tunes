@@ -48,7 +48,7 @@ h1, h2, h3, label, [data-testid="stWidgetLabel"] p {
 /* A lighter brown for secondary accents (subtitle, tab labels) — gives some tonal variety
    against the darker brown used for headings/labels, instead of a single flat brown. */
 [data-testid="stCaptionContainer"], [data-testid="stTab"] p {
-    color: #6B4A3A !important;
+    color: #4A3020 !important;
 }
 [data-testid="stVerticalBlockBorderWrapper"] {
     border-color: rgba(46, 27, 22, 0.5) !important;
@@ -56,6 +56,21 @@ h1, h2, h3, label, [data-testid="stWidgetLabel"] p {
 a {
     color: #2E1B16 !important;
     font-weight: 600;
+}
+/* Shrink the header logo/title on narrow screens — at the fixed 130px logo width the header
+   was taking up a big share of a phone screen's height. Desktop is untouched. This also caps
+   the detected-photo image, but that one already fits its container, so it's a no-op there. */
+@media (max-width: 640px) {
+    [data-testid="stImage"] img {
+        max-width: 70px !important;
+        height: auto !important;
+    }
+    h1 {
+        font-size: 1.8rem !important;
+    }
+    [data-testid="stCaptionContainer"] {
+        font-size: 0.85rem !important;
+    }
 }
 </style>
 """
@@ -225,8 +240,8 @@ def create_spotify_playlist(recommended_songs, username, emotion):
     # style="...!important" on the link: the global `a { color: ... !important }` rule (added
     # for other stray blue links) would otherwise beat this inline color too.
     styled_message(
-        '🎧 Listen to your MoodyTunes on '
-        f'<a href="{playlist_url}" style="color:#93BAF2 !important;font-weight:700;">Spotify</a> 🎧'
+        ':material/headphones: Listen to your MoodyTunes on '
+        f'<a href="{playlist_url}" style="color:#93BAF2 !important;font-weight:700;">Spotify</a> :material/headphones:'
     )
 
 # Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
@@ -244,7 +259,7 @@ def main():
         render_header("MOODY TUNES", "Get song recommendations based on your face mood")
         st.divider()
 
-        upload_tab, camera_tab = st.tabs(["📁 Upload a photo", "📸 Take a photo"])
+        upload_tab, camera_tab = st.tabs([":material/upload_file: Upload a photo", ":material/photo_camera: Take a photo"])
         with upload_tab:
             uploaded_file = st.file_uploader("", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
         with camera_tab:
@@ -286,7 +301,7 @@ def main():
                 prediction = st.session_state["mt_prediction"]
 
                 if detected_emotion is not None:
-                    styled_message('Great job! 👍')
+                    styled_message(':material/check_circle: Great job!')
 
                     # Save the image on Cloudinary — once per photo, not on every shuffle rerun.
                     if not st.session_state["mt_playlist_done"]:
@@ -316,7 +331,7 @@ def main():
                         if not recommended_songs.empty:
                             st.dataframe(recommended_songs[['Track', 'Artist']], use_container_width=True, hide_index=True)
 
-                            if st.button("🔀 Shuffle songs"):
+                            if st.button(":material/shuffle: Shuffle songs"):
                                 st.session_state["mt_recommended_songs"] = get_recommendations(detected_emotion, songs)
                                 st.rerun()
 
@@ -326,10 +341,10 @@ def main():
                                 try:
                                     create_spotify_playlist(recommended_songs, SPOTIFY_USER_ID, detected_emotion)
                                 except spotipy.SpotifyBaseException:
-                                    styled_message("Couldn't auto-create a Spotify playlist right now (the Spotify connection needs to be re-authorized), but here are your song recommendations above! 🎵")
+                                    styled_message("Couldn't auto-create a Spotify playlist right now (the Spotify connection needs to be re-authorized), but here are your song recommendations above! :material/music_note:")
                                 st.session_state["mt_playlist_done"] = True
                 else:
-                    styled_message('No face detected in the photo. Try again! 😅')
+                    styled_message(':material/sentiment_dissatisfied: No face detected in the photo. Try again!')
             else:
                 styled_message('Unable to read the photo. Please try again, folks!')
 

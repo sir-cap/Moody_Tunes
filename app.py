@@ -33,10 +33,19 @@ page_bg = """
 <style>
 [data-testid="stAppViewContainer"] {
     background:
-        radial-gradient(1100px circle at 12% -8%, rgba(124, 167, 235, 0.30), transparent 58%),
-        radial-gradient(900px circle at 100% 10%, rgba(64, 41, 36, 0.65), transparent 55%),
-        radial-gradient(700px circle at 15% 100%, rgba(124, 167, 235, 0.12), transparent 55%),
+        radial-gradient(1300px circle at 12% -8%, rgba(124, 167, 235, 0.50), transparent 62%),
+        radial-gradient(900px circle at 100% 10%, rgba(64, 41, 36, 0.55), transparent 55%),
+        radial-gradient(1000px circle at 15% 100%, rgba(124, 167, 235, 0.30), transparent 60%),
         #150d0b;
+}
+hr {
+    background-color: rgba(124, 167, 235, 0.5) !important;
+}
+h1 {
+    color: #7CA7EB !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"] {
+    border-color: rgba(124, 167, 235, 0.45) !important;
 }
 </style>
 """

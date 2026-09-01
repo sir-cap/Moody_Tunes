@@ -1,14 +1,11 @@
 [theme]
-primaryColor = "#c9c9c9"
-backgroundColor = "#04044c"
-secondaryBackgroundColor = "#04044c"
-textColor = "#c9c9c9"
+primaryColor = "#7CA7EB"
+backgroundColor = "#150d0b"
+secondaryBackgroundColor = "#2A1D18"
+textColor = "#EDE3DA"
 
 [server]
 headless = true
-
-[runner]
-systemDependencies = ["libgl1-mesa-glx"]
 
 [browser]
 gatherUsageStats = false

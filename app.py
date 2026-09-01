@@ -27,25 +27,19 @@ cloudinary_api_secret = secrets["CLOUDINARY_API_SECRET"]
 SPOTIFY_USER_ID = secrets["SPOTIFY_USER_ID"]
 CLOUDINARY_CLOUD_NAME = secrets["CLOUDINARY_CLOUD_NAME"]
 
-# Adding background — soft dual-glow dark gradient (subtler, more current than a hard
-# circular vignette), colors picked to echo the logo's violet/blue ring.
+# Adding background — soft dual-glow dark gradient, cool blue + chocolate brown palette
+# (#7CA7EB / #402924), matching the theme colors in .streamlit/config.toml.
 page_bg = """
 <style>
 [data-testid="stAppViewContainer"] {
     background:
-        radial-gradient(1100px circle at 12% -8%, rgba(124, 58, 237, 0.28), transparent 58%),
-        radial-gradient(900px circle at 100% 8%, rgba(37, 99, 235, 0.24), transparent 55%),
-        radial-gradient(700px circle at 20% 100%, rgba(29, 78, 216, 0.16), transparent 55%),
-        #07071a;
+        radial-gradient(1100px circle at 12% -8%, rgba(124, 167, 235, 0.30), transparent 58%),
+        radial-gradient(900px circle at 100% 10%, rgba(64, 41, 36, 0.65), transparent 55%),
+        radial-gradient(700px circle at 15% 100%, rgba(124, 167, 235, 0.12), transparent 55%),
+        #150d0b;
 }
 </style>
 """
-
-# Adding styles
-primaryColor = "#c9c9c9"
-backgroundColor = "#04044c"
-secondaryBackgroundColor = "#04044c"
-textColor = "#c9c9c9"
 
 # Initialize Cloudinary configuration
 cloudinary.config(

@@ -51,6 +51,66 @@ cloudinary.config(
     api_secret=cloudinary_api_secret
 )
 
+# Load the logo once and render a responsive header (logo + title + optional subtitle).
+# Replaces the old absolutely-positioned floating logo, which overlapped the title on narrow
+# (mobile) screens. A flex row that wraps avoids that entirely.
+_logo_path = "homepage_image.png"
+with open(_logo_path, "rb") as _f:
+    _logo_b64 = base64.b64encode(_f.read()).decode()
+
+def render_header(title, subtitle=None):
+    st.markdown(
+        """
+        <style>
+        .mt-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 8px 0 4px;
+        }
+        .mt-header img {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .mt-header h1 {
+            margin: 0;
+            font-size: 2.4rem;
+            line-height: 1.15;
+        }
+        .mt-header-sub {
+            margin: 2px 0 0;
+            font-size: 1.05rem;
+            opacity: 0.85;
+        }
+        @media (max-width: 640px) {
+            .mt-header { gap: 12px; }
+            .mt-header img { width: 44px; height: 44px; }
+            .mt-header h1 { font-size: 1.7rem; }
+            .mt-header-sub { font-size: 0.95rem; }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    subtitle_html = f'<p class="mt-header-sub">{subtitle}</p>' if subtitle else ""
+    st.markdown(
+        f"""
+        <div class="mt-header">
+            <a href="/" title="Reload">
+                <img src="data:image/png;base64,{_logo_b64}" alt="MoodyTunes logo">
+            </a>
+            <div>
+                <h1>{title}</h1>
+                {subtitle_html}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 # Function to save the captured image on Cloudinary
 def save_image_on_cloudinary(image_data, filename):
     # Convert the image data to bytes and create an in-memory file
@@ -170,56 +230,33 @@ def main():
     if app_mode == "Home":
         st.markdown(page_bg, unsafe_allow_html=True)
 
-        # Adding homepage image
-        homepage_image_path = "homepage_image.png"
-        homepage_image = open(homepage_image_path, "rb").read()
-        homepage_image_encoded = base64.b64encode(homepage_image).decode()
-        homepage_url = "https://moodytunes.streamlit.app/"
-
-
-        st.markdown(
-            """
-            <style>
-            .image-container {
-                position: absolute;
-                top: 0px;
-                right: 10px;
-                z-index: 9999;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            f"""
-            <div class="image-container">
-                <a href="#" onclick="window.location.reload(); return false;">
-                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="100" height="100">
-                </a>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.title("MOODY TUNES")
-        st.subheader(":headphones: Get song recommendations based on your face mood")
+        render_header("MOODY TUNES", ":headphones: Get song recommendations based on your face mood")
         st.divider()
 
-        uploaded_file = st.file_uploader("",type=["jpg", "png", "jpeg"],label_visibility="visible")
+        upload_tab, camera_tab = st.tabs(["📁 Upload a photo", "📸 Take a photo"])
+        with upload_tab:
+            uploaded_file = st.file_uploader("", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
+        with camera_tab:
+            camera_file = st.camera_input("", label_visibility="collapsed")
+
+        # Whichever widget the user actually used wins (only one will be non-None at a time
+        # in normal use, but prefer a fresh camera shot if somehow both are set).
+        active_file = camera_file if camera_file is not None else uploaded_file
 
         detected_emotion = None  # Reset detected emotion to None
 
-        if uploaded_file is not None:
-            # Convert the uploaded file to an OpenCV image
-            file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+        if active_file is not None:
+            # Convert the uploaded/captured file to an OpenCV image
+            file_bytes = np.asarray(bytearray(active_file.read()), dtype=np.uint8)
             cv_image = cv2.imdecode(file_bytes, 1)  # 1 indicates loading the image in color
 
             # Perform emotion detection
             if cv_image is not None:
-                with st.spinner("Detecting emotion from the uploaded image..."):
+                with st.spinner("Detecting emotion from the photo..."):
                     countdown_time = 3  # Set the countdown time in seconds
                     countdown_start = True  # Flag to indicate if countdown has started
                     countdown_end_time = time.time() + countdown_time
-                    detected_emotion, rgb_image = detect_emotion(cv_image) 
+                    detected_emotion, rgb_image = detect_emotion(cv_image)
 
                 if detected_emotion is not None:
                     st.success('Great job! :thumbsup:')
@@ -228,64 +265,38 @@ def main():
                     picture_filename = f"{detected_emotion}---{timestamp}.jpg"
                     cloudinary_url = save_image_on_cloudinary(rgb_image, picture_filename)
 
-                    # Display the uploaded and processed image
-                    st.image(rgb_image, use_column_width=True)
+                    with st.container(border=True):
+                        # Display the uploaded and processed image
+                        st.image(rgb_image, use_container_width=True)
 
-                    # Create a container for the recommended songs and subheader
-                    st.subheader(f"For your {detected_emotion} mood, your tunes are:")
-                    songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs dataframe
-                    recommended_songs = get_recommendations(detected_emotion, songs_df)
-                    if not recommended_songs.empty:
-                        st.dataframe(recommended_songs[['Track', 'Artist']])
-                        create_spotify_playlist(recommended_songs, SPOTIFY_USER_ID , detected_emotion)
+                        # Create a container for the recommended songs and subheader
+                        st.subheader(f"For your {detected_emotion} mood, your tunes are:")
+                        songs_df = pd.read_csv('cleaned_songs.csv')  # Load songs dataframe
+                        recommended_songs = get_recommendations(detected_emotion, songs_df)
+                        if not recommended_songs.empty:
+                            st.dataframe(recommended_songs[['Track', 'Artist']], use_container_width=True)
+                            create_spotify_playlist(recommended_songs, SPOTIFY_USER_ID , detected_emotion)
                 else:
                     detected_emotion = None
-                    st.warning('No face detected in the uploaded image. Try again! :pick:')
+                    st.warning('No face detected in the photo. Try again! :pick:')
             else:
                 detected_emotion = None
-                st.warning('Unable to read the uploaded image. Please try again, folks!')
-            
-        # Adding about page and the homepage image 
+                st.warning('Unable to read the photo. Please try again, folks!')
+
+        # Adding about page and the homepage image
     elif app_mode == "About Moody Tunes":
-        st.markdown(page_bg, unsafe_allow_html=True) 
-        homepage_image_path = "homepage_image.png"
-        homepage_image = open(homepage_image_path, "rb").read()
-        homepage_image_encoded = base64.b64encode(homepage_image).decode()
-        homepage_url = "https://moodytunes.streamlit.app/"
-        st.markdown(
-            """
-            <style>
-            .image-container {
-                position: absolute;
-                top: 0px;
-                right: 10px;
-                z-index: 9999;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            f"""
-            <div class="image-container">
-                <a href="#" onclick="window.location.reload(); return false;">
-                    <img src="data:image/png;base64,{homepage_image_encoded}" alt="Homepage" width="80" height="80">
-                </a>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.title("About Moody Tunes")
+        st.markdown(page_bg, unsafe_allow_html=True)
+        render_header("About Moody Tunes")
         st.write("Moody Tunes is a web app that recognizes your mood using your facial expression and gives the user music suggestions from the same mood")
         st.divider()
         st.markdown("**How it works:**")
-        st.write("1. Drag and drop or click in 'Browse files' to upload your picture to start the mood detection.")
+        st.write("1. Upload a photo, or take one with your camera, to start the mood detection.")
         st.write("2. The application will detect your facial expression and display it on the screen.")
         st.write("4. Based on your expression, the application will recommend songs that match your mood.")
         st.write("5. A Spotify page will be open for you to listen to your Moody Tunes.")
         st.divider()
         st.markdown("**Note:**")
         st.write("For the mood detection to work accurately, ensure that your face is well-illuminated and directly facing the camera.")
-        st.warning("For more information, please reach out to diogo.capitao.576@gmail.com")
+        st.warning("For more information, please reach out to diogoacapitao@gmail.com")
 if __name__ == "__main__":
     main()

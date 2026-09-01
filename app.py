@@ -40,16 +40,20 @@ page_bg = """
     background: #93BAF2;
 }
 hr {
-    background-color: rgba(64, 41, 36, 0.5) !important;
+    background-color: rgba(46, 27, 22, 0.55) !important;
 }
-h1 {
-    color: #402924 !important;
+h1, h2, h3, label, [data-testid="stWidgetLabel"] p {
+    color: #2E1B16 !important;
 }
 [data-testid="stCaptionContainer"] {
-    color: #2A1A14 !important;
+    color: #1A100C !important;
 }
 [data-testid="stVerticalBlockBorderWrapper"] {
-    border-color: rgba(64, 41, 36, 0.45) !important;
+    border-color: rgba(46, 27, 22, 0.5) !important;
+}
+a {
+    color: #2E1B16 !important;
+    font-weight: 600;
 }
 </style>
 """
@@ -60,6 +64,16 @@ cloudinary.config(
     api_key=cloudinary_api_key,
     api_secret=cloudinary_api_secret
 )
+
+# Brand-colored replacement for st.success/st.info/st.warning: Streamlit's built-in alert
+# colors (green/blue/yellow) aren't part of this app's blue+brown palette and clash with it.
+# html param lets a caller embed a styled link (see the Spotify box) instead of plain text.
+def styled_message(html):
+    st.markdown(
+        f'<div style="background:#2E1B16;color:#EDE3DA;padding:12px 18px;'
+        f'border-radius:8px;margin:16px 0;font-size:15px;">{html}</div>',
+        unsafe_allow_html=True,
+    )
 
 # Load the logo once and render a responsive header (logo + title + optional subtitle).
 # Replaces the old absolutely-positioned floating logo, which overlapped the title on narrow
@@ -206,14 +220,11 @@ def create_spotify_playlist(recommended_songs, username, emotion):
 
     # Add info if it's successful
     playlist_url = playlist['external_urls']['spotify']
-    # A custom-styled box instead of st.warning(): Streamlit's built-in warning color (an
-    # olive/yellow-green) doesn't belong to the app's palette and isn't reliably overridable
-    # via CSS across Streamlit versions, so this renders with our own brown/cream/blue colors.
-    st.markdown(
-        f'<div style="background:#402924;color:#EDE3DA;padding:14px 18px;border-radius:8px;'
-        f'margin-top:10px;font-size:15px;">🎧 Listen to your MoodyTunes on '
-        f'<a href="{playlist_url}" style="color:#93BAF2;font-weight:600;">Spotify</a> 🎧</div>',
-        unsafe_allow_html=True,
+    # style="...!important" on the link: the global `a { color: ... !important }` rule (added
+    # for other stray blue links) would otherwise beat this inline color too.
+    styled_message(
+        '🎧 Listen to your MoodyTunes on '
+        f'<a href="{playlist_url}" style="color:#93BAF2 !important;font-weight:700;">Spotify</a> 🎧'
     )
 
 # Function for streamlit homepage structure and capture the image with emotion and return recommended songs playlist
@@ -225,7 +236,10 @@ def main():
     if app_mode == "Home":
         st.markdown(page_bg, unsafe_allow_html=True)
 
-        render_header("MOODY TUNES", "🎧 Get song recommendations based on your face mood")
+        # No emoji here on purpose: emoji glyphs render in their own fixed colors (mostly
+        # white/light) regardless of CSS `color`, so against a light background they end up
+        # looking washed out — text alone is more legible.
+        render_header("MOODY TUNES", "Get song recommendations based on your face mood")
         st.divider()
 
         upload_tab, camera_tab = st.tabs(["📁 Upload a photo", "📸 Take a photo"])
@@ -270,7 +284,7 @@ def main():
                 prediction = st.session_state["mt_prediction"]
 
                 if detected_emotion is not None:
-                    st.success('Great job! 👍')
+                    styled_message('Great job! 👍')
 
                     # Save the image on Cloudinary — once per photo, not on every shuffle rerun.
                     if not st.session_state["mt_playlist_done"]:
@@ -289,7 +303,7 @@ def main():
                             confidence_df = pd.DataFrame(
                                 {"Confidence (%)": prediction * 100}, index=emotion_labels
                             )
-                            st.bar_chart(confidence_df, height=200)
+                            st.bar_chart(confidence_df, height=200, color="#2E1B16")
 
                         # Create a container for the recommended songs and subheader
                         st.subheader(f"For your {detected_emotion} mood, your tunes are:")
@@ -298,7 +312,7 @@ def main():
                         recommended_songs = st.session_state["mt_recommended_songs"]
 
                         if not recommended_songs.empty:
-                            st.dataframe(recommended_songs[['Track', 'Artist']], use_container_width=True)
+                            st.dataframe(recommended_songs[['Track', 'Artist']], use_container_width=True, hide_index=True)
 
                             if st.button("🔀 Shuffle songs"):
                                 st.session_state["mt_recommended_songs"] = get_recommendations(detected_emotion, songs)
@@ -310,12 +324,12 @@ def main():
                                 try:
                                     create_spotify_playlist(recommended_songs, SPOTIFY_USER_ID, detected_emotion)
                                 except spotipy.SpotifyBaseException:
-                                    st.info("Couldn't auto-create a Spotify playlist right now (the Spotify connection needs to be re-authorized), but here are your song recommendations above! 🎵")
+                                    styled_message("Couldn't auto-create a Spotify playlist right now (the Spotify connection needs to be re-authorized), but here are your song recommendations above! 🎵")
                                 st.session_state["mt_playlist_done"] = True
                 else:
-                    st.warning('No face detected in the photo. Try again! 😅')
+                    styled_message('No face detected in the photo. Try again! 😅')
             else:
-                st.warning('Unable to read the photo. Please try again, folks!')
+                styled_message('Unable to read the photo. Please try again, folks!')
 
         # Adding about page and the homepage image
     elif app_mode == "About Moody Tunes":
@@ -331,6 +345,6 @@ def main():
         st.divider()
         st.markdown("**Note:**")
         st.write("For the mood detection to work accurately, ensure that your face is well-illuminated and directly facing the camera.")
-        st.warning("For more information, please reach out to diogoacapitao@gmail.com")
+        styled_message("For more information, please reach out to diogoacapitao@gmail.com")
 if __name__ == "__main__":
     main()

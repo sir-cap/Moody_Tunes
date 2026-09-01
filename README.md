@@ -24,12 +24,19 @@
 ## Key Features:
     
     - Facial Recognition:
-    Our machine learning model recognizes and interprets your facial expressions, 
-    capturing your current mood.
+    A DNN face detector (OpenCV YuNet) finds your face, then a small CNN classifies your
+    expression into one of 7 moods.
   
+    - Upload or capture:
+    Upload a photo, or take one directly with your camera (desktop or mobile browser).
+
     - Personalized Recommendations: 
     Based on your detected mood, MoodyTunes generates customized song 
-    recommendations tailored specifically to you.
+    recommendations tailored specifically to you — with a Shuffle button to re-roll
+    the list without re-detecting your mood.
+
+    - Confidence breakdown:
+    See how confident the model is across all 7 moods, not just the winning one.
 
     - Spotify Playlist: 
     Creates a playlist on Spotify based on the personalized recommendations
@@ -40,6 +47,26 @@
     providing accurate song recommendations.
     
     Embrace the harmony between your mood and music with MoodyTunes today!
+
+## 2026 update
+
+The original 2023 bootcamp project stopped working (dependency drift — see commit history
+for the full list of fixes) and got a round of improvements, done with AI pair-programming
+via [Claude Code](https://claude.com/claude-code):
+
+- Fixed the broken deployment (unpinned dependencies had drifted to incompatible versions:
+  TensorFlow/Keras, OpenCV, a removed Streamlit API).
+- Replaced the Haar Cascade face detector with OpenCV's YuNet DNN detector — more reliable
+  detection.
+- Added camera capture (`st.camera_input`) alongside file upload.
+- Added a per-emotion confidence chart and a Shuffle-songs button.
+- Found and removed three separate accidental credential leaks in the git history
+  (`secrets.toml`, a stale OAuth token cache, and a compiled `.pyc` with hardcoded keys) —
+  see [`SECRETS.md`](SECRETS.md) for how secrets are managed now.
+- Rebuilt the visual design (color palette, responsive header, custom-styled alerts).
+
+**Stack:** Python, Streamlit, TensorFlow/Keras, OpenCV, Spotify Web API (spotipy), Cloudinary,
+deployed on Streamlit Community Cloud with GitHub auto-deploy.
     
 ## Data
     
